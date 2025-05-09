@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2be8f6ff5b364284297a0d48e5b19c21, type: 3}
+  m_Name: DeckRegistry
+  m_EditorClassIdentifier: 
+  allCards:
+  - {fileID: 11400000, guid: aa4bf7ccb881f814dbef8c08d750b5ec, type: 2}
+  - {fileID: 11400000, guid: 8c6f72f746ca56d47842be7f19b6ba89, type: 2}
+  - {fileID: 11400000, guid: 16386c7761a7d3942b13f50fbb0559c6, type: 2}
+  - {fileID: 11400000, guid: b654653d8c61448459ae3ef34afe3169, type: 2}
+  - {fileID: 11400000, guid: fc99aa377b5625642a4b3255bb9ed356, type: 2}
+  - {fileID: 11400000, guid: 8326d6c31d9e5c64692f5608f4b9d157, type: 2}
+  allCastingLegends:
+  - {fileID: 11400000, guid: d4c66916b9cd4a645922b0f67909b006, type: 2}
+  - {fileID: 11400000, guid: 38983c22e569b904ca620900ec54d817, type: 2}
+  allLegendStones:
+  - {fileID: 11400000, guid: e39a3e96872b02245bb887d88d03c264, type: 2}

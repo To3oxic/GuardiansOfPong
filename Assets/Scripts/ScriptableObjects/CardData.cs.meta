@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 47307fd82d0bca24e8390870c02a13e9
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - cardImage: {instanceID: 0}
+  - effect: {instanceID: 0}
+  - ballMaterialOverride: {instanceID: 0}
+  - activationSound: {instanceID: 0}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

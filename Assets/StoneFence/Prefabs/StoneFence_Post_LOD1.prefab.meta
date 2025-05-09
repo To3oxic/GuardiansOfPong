@@ -1,0 +1,21 @@
+fileFormatVersion: 2
+guid: d9bb611e9d73b9f4085f98b4a66d3319
+labels:
+- Stone
+- Fence
+- Wall
+- Post
+- Pillar
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 2437
+  packageName: Stone Fence
+  packageVersion: 1.0
+  assetPath: Assets/StoneFence/Prefabs/StoneFence_Post_LOD1.prefab
+  uploadId: 25781

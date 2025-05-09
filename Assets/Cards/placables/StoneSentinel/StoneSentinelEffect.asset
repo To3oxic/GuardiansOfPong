@@ -1,0 +1,16 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f5c27e155054b8e43ba55f8caa2e844e, type: 3}
+  m_Name: StoneSentinelEffect
+  m_EditorClassIdentifier: 
+  sentinelPrefab: {fileID: 8271339868393549443, guid: 60009354aa9c93c48b8653736ce8135d, type: 3}
+  sentinelPreviewPrefab: {fileID: 0}

@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 5cb274e90c10bca4395b4fac2910367a
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 2437
+  packageName: Stone Fence
+  packageVersion: 1.0
+  assetPath: Assets/StoneFence/Materials/StoneFence01.mat
+  uploadId: 25781
