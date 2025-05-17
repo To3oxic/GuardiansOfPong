@@ -47,6 +47,11 @@ public class GameManager : NetworkBehaviour
 
     public Dictionary<ulong, List<CardData>> playerCardDecks = new();
 
+    // Arena boundaries (consider making these configurable in Inspector or from a settings SO)
+    public float arenaMinX = -25f;
+    public float arenaMaxX = 25f;
+    public float arenaMinZ = -50f;
+    public float arenaMaxZ = 50f;
 
     private void Awake()
     {
@@ -187,22 +192,19 @@ public class GameManager : NetworkBehaviour
             return;
         }
         playerIndexMap[clientId] = spawnIndex;
-        GameObject paddle = spawnIndex == 0 ? client1Paddle : client2Paddle;
-        string spawnName = spawnIndex == 0 ? "client1" : "client2";
-        Transform spawn = spawnPoints.FirstOrDefault(t => t.name == spawnName);
+        // GameObject paddle = spawnIndex == 0 ? client1Paddle : client2Paddle; // Old way
+        // string spawnName = spawnIndex == 0 ? "client1" : "client2"; // Old way for paddle prefab selection
 
-        paddle = Instantiate(paddle, spawn.position, spawn.rotation);
-        paddle.GetComponent<NetworkObject>().SpawnWithOwnership(clientId);
+        // New logic: Paddle prefab is determined by LegendStoneData, which should be available when deck is registered.
+        // For now, we'll assume playerDecks[clientId] is populated before this, or we move this to RegisterPlayerDeck.
+        // This part of the logic might be better placed in RegisterPlayerDeck after the DeckPayload is received and parsed.
 
-        Debug.Log($"[GameManager] Spawned paddle for client {clientId} at index {spawnIndex}");
+        // Placeholder: If playerDecks isn't ready here, this will fail or use defaults.
+        // The actual paddle instantiation should happen once the deck is known.
+        // We will move the paddle spawning to RegisterPlayerDeck for robustness.
+        // For now, OnClientConnected will just assign an index. Paddle and Legend spawning will be in RegisterPlayerDeck.
 
-        GameObject stone = spawnIndex == 0 ? client1LS : client2LS;
-        spawnName = spawnIndex == 0 ? "client1LSSpawn" : "client2LSSpawn";
-        spawn = stoneSpawnPoints.FirstOrDefault(t => t.name == spawnName);
-        stone = Instantiate(stone, spawn.position, spawn.rotation);
-        stone.GetComponent<NetworkObject>().SpawnWithOwnership(clientId);
-        stone.GetComponent<LegendStone>().ownerClientId = clientId;
-
+        Debug.Log($"[GameManager] Client {clientId} connected and assigned index {spawnIndex}. Paddle and Legend will be spawned after deck registration.");
     }
 
 
@@ -210,18 +212,83 @@ public class GameManager : NetworkBehaviour
     public void RegisterPlayerDeck(ulong clientId, DeckPayload payload)
     {
         playerDecks[clientId] = payload;
-        Debug.Log($"[GameManager] Deck registered for client {clientId}");
+        Debug.Log($"[GameManager] Deck registered for client {clientId}: LegendStone '{payload.legendStoneName}', CastingLegend '{payload.castingLegendName}'");
 
+        // Resolve and store full CardData list for the player
         List<CardData> resolvedCards = new();
-        foreach (var name in payload.cardNames)
+        foreach (var cardNameIter in payload.cardNames) // Renamed to avoid conflict with outer scope variable
         {
-            var card = DeckRegistry.Instance.GetCardByName(name);
+            var card = DeckRegistry.Instance.GetCardByName(cardNameIter);
             if (card != null) resolvedCards.Add(card);
+            else Debug.LogWarning($"[GameManager] Card '{cardNameIter}' not found in registry for player {clientId}.");
         }
         playerCardDecks[clientId] = resolvedCards;
+
+        // Store shared legend name (already doing this)
         sharedLegends[clientId] = payload.castingLegendName;
-        int index = playerIndexMap[clientId];
-        SpawnLegendForPlayer(clientId, index);
+
+        // --- SPAWN PADDLE AND LEGEND BASED ON DECK CHOICES --- 
+        if (!playerIndexMap.TryGetValue(clientId, out int spawnIndex))
+        {
+            Debug.LogError($"[GameManager] Player index not found for client {clientId} during deck registration. Cannot spawn paddle/legend.");
+            return;
+        }
+
+        LegendStoneData selectedLegendStoneData = DeckRegistry.Instance.GetLegendStoneByName(payload.legendStoneName);
+        if (selectedLegendStoneData == null)
+        {
+            Debug.LogError($"[GameManager] LegendStoneData '{payload.legendStoneName}' not found in registry for player {clientId}. Cannot spawn paddle.");
+            return; // Or spawn a default paddle
+        }
+
+        if (selectedLegendStoneData.associatedPaddlePrefab == null)
+        {
+            Debug.LogError($"[GameManager] LegendStoneData '{payload.legendStoneName}' has no Associated Paddle Prefab assigned! Player {clientId} will not have a paddle.");
+            return;
+        }
+
+        // Determine spawn point for the paddle
+        string paddleSpawnName = spawnIndex == 0 ? "client1" : "client2"; // Assumes spawnPoints are named "client1", "client2"
+        Transform paddleSpawnTransform = spawnPoints.FirstOrDefault(t => t.name == paddleSpawnName);
+        if (paddleSpawnTransform == null)
+        {
+            Debug.LogError($"[GameManager] Paddle spawn point '{paddleSpawnName}' not found. Cannot spawn paddle for player {clientId}.");
+            return;
+        }
+
+        // Instantiate and spawn the paddle chosen by LegendStoneData
+        GameObject paddleGO = Instantiate(selectedLegendStoneData.associatedPaddlePrefab, paddleSpawnTransform.position, paddleSpawnTransform.rotation);
+        PaddleController paddleController = paddleGO.GetComponent<PaddleController>();
+
+        if (paddleController == null)
+        {
+            Debug.LogError($"[GameManager] Associated Paddle Prefab for '{selectedLegendStoneData.stoneName}' is missing PaddleController component! Destroying spawned paddle for player {clientId}.");
+            Destroy(paddleGO);
+            return;
+        }
+
+        // Set the chosen Legend Stone name on the PaddleController *before* spawning it, so it's available in OnNetworkSpawn
+        paddleController._tempInitialStoneNameForServer = selectedLegendStoneData.stoneName;
+        Debug.Log($"[GameManager] Set _tempInitialStoneNameForServer on paddle instance to: {selectedLegendStoneData.stoneName}");
+
+        NetworkObject paddleNetObj = paddleGO.GetComponent<NetworkObject>();
+        if (paddleNetObj != null)
+        {
+            paddleNetObj.SpawnWithOwnership(clientId);
+            Debug.Log($"[GameManager] Spawned paddle '{paddleGO.name}' (from LegendStone '{selectedLegendStoneData.stoneName}') for client {clientId} at index {spawnIndex}.");
+        }
+        else
+        {
+            Debug.LogError($"[GameManager] Associated Paddle Prefab for '{selectedLegendStoneData.stoneName}' is missing NetworkObject component! Destroying spawned paddle for player {clientId}.");
+            Destroy(paddleGO);
+            return;
+        }
+
+        // Spawn Casting Legend Avatar (Guardian)
+        // The existing SpawnLegendForPlayer method seems suitable, ensure it uses the correct spawnIndex from playerIndexMap
+        SpawnLegendForPlayer(clientId, spawnIndex);
+        // --- END SPAWN PADDLE AND LEGEND ---
+
         SendDeckToClientClientRpc(payload, new ClientRpcParams
         {
             Send = new ClientRpcSendParams { TargetClientIds = new[] { clientId } }
@@ -232,7 +299,6 @@ public class GameManager : NetworkBehaviour
             Debug.Log("[GameManager] All decks received. Queuing match start...");
             StartCoroutine(StartGameNextFrame());
         }
-
     }
 
     [ClientRpc]
@@ -466,8 +532,27 @@ public class GameManager : NetworkBehaviour
         }
     }
 
+    // --- NEW CLIENT RPC FOR LIGHTNING BALL PATH VISUALIZATION ---
+    [ClientRpc]
+    public void ShowLightningPathOnClientsClientRpc(Vector3[] pathPointsArray, float trailDuration, ClientRpcParams clientRpcParams = default)
+    {
+        // This RPC will be executed on all clients.
+        // The server host acting as a client will also run this.
+        // if (IsServer && IsHost) { /* Optionally do nothing if host shouldn't see it, or handle differently */ }
 
+        Debug.Log($"[GameManager] Client ({NetworkManager.Singleton.LocalClientId}): Received ShowLightningPathOnClientsClientRpc with {pathPointsArray.Length} points for {trailDuration}s.");
 
-
+        // Attempt to find the PathVisualizer and show the path.
+        // PathVisualizer should be a singleton or easily findable.
+        if (PathVisualizer.Instance != null)
+        {
+            PathVisualizer.Instance.ShowPath(new List<Vector3>(pathPointsArray), trailDuration);
+        }
+        else
+        {
+            Debug.LogWarning("[GameManager] Client: PathVisualizer.Instance not found. Cannot display lightning ball trail.");
+        }
+    }
+    // --- END NEW CLIENT RPC ---
 
 }

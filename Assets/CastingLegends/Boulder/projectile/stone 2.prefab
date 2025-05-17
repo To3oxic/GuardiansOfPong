@@ -12,9 +12,9 @@ GameObject:
   - component: {fileID: 29469207255766942}
   - component: {fileID: 2849728941031826260}
   - component: {fileID: -6837653729259922860}
-  - component: {fileID: -4210957134761019608}
   - component: {fileID: 5102838767416554092}
   - component: {fileID: 6430853706648663958}
+  - component: {fileID: 4456629557412669903}
   m_Layer: 0
   m_Name: stone 2
   m_TagString: Untagged
@@ -115,20 +115,6 @@ MonoBehaviour:
   AutoObjectParentSync: 1
   SyncOwnerTransformWhenParented: 1
   AllowOwnerToParent: 0
---- !u!114 &-4210957134761019608
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4363065753263768193}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4e144dc77a90cb34c91bfde8fa8c858e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ShowTopMostFoldoutHeaderGroup: 1
-  speed: 15
 --- !u!114 &5102838767416554092
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -180,9 +166,23 @@ SphereCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Radius: 0.42021334
+  m_Radius: 0.35
   m_Center: {x: 0, y: 0.29422173, z: 0}
+--- !u!114 &4456629557412669903
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4363065753263768193}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 249a0ccfdcc1fe0478ada089875c2bb3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+  speed: 30

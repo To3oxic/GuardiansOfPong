@@ -27,8 +27,6 @@ public class BallController : NetworkBehaviour
     private float baseDamage = 10;
     private List<IBallEffect> activeBallEffects = new();
 
-
-
     public override void OnNetworkSpawn()
     {
         rb = GetComponent<Rigidbody>();
@@ -196,18 +194,22 @@ public class BallController : NetworkBehaviour
         if (!IsServer)
             return;
 
-        if (other.CompareTag("LegendStone"))
-        {
-            LegendStone stone = other.GetComponent<LegendStone>();
-            if (stone != null)
-            {
-                Debug.Log("Ball hit a legend stone.");
-                ulong loserId = stone.ownerClientId;
-                GameManager.Instance.TriggerLegendStoneDefeat(loserId);
-            }
+        // If rb is kinematic, it implies a special effect is controlling movement, so skip normal triggers.
+        if (rb.isKinematic)
+            return;
 
-        }
-        else if (other.CompareTag("client2Goal"))
+        // Removed LegendStone check here, as LegendStoneController.OnCollisionEnter handles this.
+        // if (other.CompareTag("LegendStone"))
+        // {
+        //     LegendStoneController stoneController = other.GetComponent<LegendStoneController>();
+        //     if (stoneController != null)
+        //     {
+        //         // The LegendStoneController itself will call GameManager.Instance.TriggerLegendStoneDefeat
+        //         Debug.Log("Ball hit a legend stone - collision detected by BallController (this log can be removed if redundant)."); 
+        //     }
+        // }
+        // else 
+        if (other.CompareTag("client2Goal"))
         {
             Debug.Log("Goal! Player scored a point.");
             GameManager.Instance.OpponentLosesPoint();
@@ -223,39 +225,68 @@ public class BallController : NetworkBehaviour
     {
         if (IsServer)
         {
-            for (int i = activeBallEffects.Count - 1; i >= 0; i--)
+            // If Rigidbody is kinematic, an effect is controlling it, so don't run standard effect updates or general position sync.
+            if (!rb.isKinematic)
             {
-                activeBallEffects[i].OnUpdate(this);
-
-                if (activeBallEffects[i].ShouldExpire())
+                for (int i = activeBallEffects.Count - 1; i >= 0; i--)
                 {
-                    activeBallEffects.RemoveAt(i);
+                    activeBallEffects[i].OnUpdate(this);
+
+                    if (activeBallEffects[i].ShouldExpire())
+                    {
+                        activeBallEffects.RemoveAt(i);
+                    }
                 }
+                UpdateBallPositionClientRpc(transform.position); // Regular position update for non-kinematic state
             }
-            UpdateBallPositionClientRpc(transform.position);
         }
     }
 
     public void RegisterBallEffect(IBallEffect newEffect)
     {
-        // Check for existing effect of same type
-        for (int i = activeBallEffects.Count - 1; i >= 0; i--)
+        if (!IsServer) return;
+
+        if (newEffect.Type == BallEffectType.Special)
         {
-            var existing = activeBallEffects[i];
-            if (existing.Type == newEffect.Type)
+            Debug.Log($"[BallController] Registering SPECIAL effect: {newEffect.Source}. Clearing other effects and preparing to start its sequence.");
+
+            activeBallEffects.Add(newEffect); // Add only the new special effect
+
+            // Attempt to start its sequence using the new interface method.
+            if (GameManager.Instance != null)
             {
-                if (newEffect.ShouldOverride(existing))
-                {
-                    activeBallEffects.RemoveAt(i); // Remove old effect
-                }
-                else
-                {
-                    return; // Don't add the new one
-                }
+                Debug.Log($"[BallController] Attempting to start special sequence for: {newEffect.Source}");
+                newEffect.AttemptToStartSpecialSequence(this, GameManager.Instance);
+            }
+            else
+            {
+                Debug.LogError($"[BallController] GameManager.Instance is null. Cannot start Special effect sequence for {newEffect.Source}. Effect will be registered but not run.");
             }
         }
-
-        activeBallEffects.Add(newEffect);
+        else // For non-special effects, use the existing override logic
+        {
+            for (int i = activeBallEffects.Count - 1; i >= 0; i--)
+            {
+                var existing = activeBallEffects[i];
+                // Example: More complex override logic could be based on specific sources or priorities
+                if (existing.Type == newEffect.Type && existing.Source == newEffect.Source) // Simple same type/source override
+                {
+                    if (newEffect.ShouldOverride(existing))
+                    {
+                        Debug.Log($"[BallController] Overriding existing effect {existing.Source} with {newEffect.Source} of the same type.");
+                        activeBallEffects.RemoveAt(i);
+                        break; // Found and handled, now add the new one outside loop
+                    }
+                    else
+                    {
+                        Debug.Log($"[BallController] New effect {newEffect.Source} did not override existing {existing.Source} of the same type. Not adding.");
+                        return; // Do not add newEffect
+                    }
+                }
+            }
+            Debug.Log($"[BallController] Adding non-special effect: {newEffect.Source} to list of {activeBallEffects.Count} effects.");
+            activeBallEffects.Add(newEffect);
+        }
     }
 
 
@@ -355,5 +386,76 @@ public class BallController : NetworkBehaviour
         {
             ballRenderer.material = originalMaterial;
         }
+    }
+
+    public void StopMovementAndClearEffects()
+    {
+        if (!IsServer) return;
+
+        // Zero out velocities FIRST, while Rigidbody might still be non-kinematic
+        if (rb != null) // Ensure rb is not null
+        {
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+        }
+
+        // Then make kinematic and set other properties
+        if (rb != null)
+        {
+            rb.isKinematic = true;
+            rb.useGravity = false;
+        }
+        activeBallEffects.Clear();
+        Debug.Log("[BallController] Movement stopped, effects cleared, RB kinematic.");
+
+        // Notify clients to stop movement
+        StopMovementOnClientsClientRpc();
+    }
+
+    [ClientRpc]
+    private void StopMovementOnClientsClientRpc()
+    {
+        if (!IsServer) // Only run on clients
+        {
+            if (rb != null)
+            {
+                rb.linearVelocity = Vector3.zero;
+                rb.angularVelocity = Vector3.zero;
+                rb.isKinematic = true;
+                rb.useGravity = false;
+            }
+            Debug.Log("[BallController] Client-side movement stopped for special effect.");
+        }
+    }
+
+    public void ResumeNormalMovement(float newSpeed, Vector3 newDirection)
+    {
+        if (!IsServer) return;
+        Debug.Log($"[BallController.ResumeNormalMovement] CALLED. Received newSpeed: {newSpeed}, newDirection: {newDirection}");
+
+        rb.isKinematic = false;
+        rb.useGravity = true; // Re-enable gravity (assuming it's normally used)
+
+        this.launchDirection = newDirection.normalized; // Update internal launchDirection FIELD
+        this.speed = newSpeed; // Update internal speed FIELD
+
+        rb.linearVelocity = this.launchDirection * this.speed;
+        Debug.Log($"[BallController.ResumeNormalMovement] APPLIED. rb.linearVelocity: {rb.linearVelocity}, this.launchDirection: {this.launchDirection}, this.speed: {this.speed}");
+
+        // Ensure clients also resume normal movement if they were doing special prediction/kinematic handling
+        // For now, SyncBallPositionClientRpc should update them with the new physics-driven velocity.
+        SyncBallPositionClientRpc(rb.position, rb.linearVelocity);
+    }
+
+    // Added missing getter methods needed by effects
+    public Vector3 GetVelocity()
+    {
+        if (rb == null) return Vector3.zero; // Safeguard if rb is not yet initialized
+        return rb.linearVelocity;
+    }
+
+    public float GetCurrentSpeed()
+    {
+        return this.speed; // 'speed' is a public field in BallController
     }
 }

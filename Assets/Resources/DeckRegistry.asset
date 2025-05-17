@@ -19,8 +19,12 @@ MonoBehaviour:
   - {fileID: 11400000, guid: b654653d8c61448459ae3ef34afe3169, type: 2}
   - {fileID: 11400000, guid: fc99aa377b5625642a4b3255bb9ed356, type: 2}
   - {fileID: 11400000, guid: 8326d6c31d9e5c64692f5608f4b9d157, type: 2}
+  - {fileID: 11400000, guid: b194676a1d5df9f4a847802ab7470637, type: 2}
+  - {fileID: 11400000, guid: e1ca14b098306c14985cfa33c7eb305e, type: 2}
+  - {fileID: 11400000, guid: 033c7c9c90a2e7a4198877089438034d, type: 2}
+  - {fileID: 11400000, guid: 2533623f38eda0f4d920ac8c03043736, type: 2}
   allCastingLegends:
   - {fileID: 11400000, guid: d4c66916b9cd4a645922b0f67909b006, type: 2}
   - {fileID: 11400000, guid: 38983c22e569b904ca620900ec54d817, type: 2}
   allLegendStones:
-  - {fileID: 11400000, guid: e39a3e96872b02245bb887d88d03c264, type: 2}
+  - {fileID: 11400000, guid: 83a0cf349da7f794a9e1c034bd7bd913, type: 2}

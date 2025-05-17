@@ -11,6 +11,12 @@ public abstract class CardEffect : ScriptableObject
     /// <returns>The prefab to instantiate for preview, or null if no preview is needed.</returns>
     public virtual GameObject GetPreviewPrefab() { return null; }
 
+    /// <summary>
+    /// Gets the radius for the placement preview visual (e.g., a circle indicating AoE or unit size).
+    /// </summary>
+    /// <returns>The radius of the effect. Defaults to 1f.</returns>
+    public virtual float GetEffectRadius() => 1f;
+
     public abstract void ApplyEffect(ulong playerId);
     public virtual void ApplyEffect(ulong playerId, Vector3 position, Vector3 direction)
     {

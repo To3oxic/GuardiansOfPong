@@ -12,5 +12,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f5c27e155054b8e43ba55f8caa2e844e, type: 3}
   m_Name: StoneSentinelEffect
   m_EditorClassIdentifier: 
-  sentinelPrefab: {fileID: 8271339868393549443, guid: 60009354aa9c93c48b8653736ce8135d, type: 3}
-  sentinelPreviewPrefab: {fileID: 0}
+  stoneSentinelPrefab: {fileID: 8991595870264218776, guid: 09d8a62dc35a4cf4ba2e517e3aba7676, type: 3}

@@ -5,6 +5,7 @@ public class CastingLegendData : ScriptableObject
 {
     public string legendName;
     public GameObject legendAvatarPrefab;
+    public Sprite legendIcon;
     public string description;
 
     public float damageBoostPercent;

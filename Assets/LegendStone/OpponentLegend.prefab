@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 3857992116439304500}
   - component: {fileID: 2058406550402890768}
   - component: {fileID: 3959386370771445380}
-  - component: {fileID: -2981008598505508567}
+  - component: {fileID: -4208146571904476900}
   m_Layer: 0
   m_Name: OpponentLegend
   m_TagString: LegendStone
@@ -104,7 +104,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 1
+  m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -135,7 +135,7 @@ MonoBehaviour:
   AutoObjectParentSync: 1
   SyncOwnerTransformWhenParented: 1
   AllowOwnerToParent: 0
---- !u!114 &-2981008598505508567
+--- !u!114 &-4208146571904476900
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -144,8 +144,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 2586271380367416808}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a519dacc932f4b44eb2827fe98c96d33, type: 3}
+  m_Script: {fileID: 11500000, guid: 7fffa062b7cc90b45a7da01343411f77, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  isTopStone: 0

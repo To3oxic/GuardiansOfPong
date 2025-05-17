@@ -29,9 +29,9 @@ TagManager:
   - Unit
   - paddle
   - Board
-  - 
-  - 
-  - 
+  - Wall
+  - guardianDisplay
+  - StoneDisplay
   - 
   - 
   - 

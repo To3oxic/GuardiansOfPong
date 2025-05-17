@@ -27,4 +27,10 @@ public class StoneBallIBallEffect : IBallEffect
         // Replace any existing damage modifier
         return other.Type == BallEffectType.DamageModifier;
     }
+
+    // Implementation for IBallEffect interface, even if not used by this specific effect type.
+    public void AttemptToStartSpecialSequence(BallController ball, GameManager gameManager)
+    {
+        // This effect is not a "Special" sequence-starting effect, so this method is intentionally empty.
+    }
 }

@@ -48,9 +48,9 @@ public class DeckManager : MonoBehaviour
     public void SpawnLegendStone(Transform spawnPoint)
     {
         var stoneData = GetSelectedStone();
-        if (stoneData != null && stoneData.stonePrefab != null)
+        if (stoneData != null && stoneData.legendStoneVisualPrefab != null)
         {
-            GameObject stone = Instantiate(stoneData.stonePrefab, spawnPoint.position, spawnPoint.rotation);
+            GameObject stone = Instantiate(stoneData.legendStoneVisualPrefab, spawnPoint.position, spawnPoint.rotation);
             NetworkObject netObj = stone.GetComponent<NetworkObject>();
             if (netObj != null && NetworkManager.Singleton.IsServer)
             {

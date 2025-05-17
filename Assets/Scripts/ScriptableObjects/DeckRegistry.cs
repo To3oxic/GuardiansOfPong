@@ -31,6 +31,6 @@ public class DeckRegistry : ScriptableObject
 
     public LegendStoneData GetLegendStoneByName(string name)
     {
-        return allLegendStones.FirstOrDefault(s => s.name == name);
+        return allLegendStones.FirstOrDefault(s => s.stoneName == name);
     }
 }

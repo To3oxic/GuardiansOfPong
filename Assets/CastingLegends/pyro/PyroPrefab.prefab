@@ -1116,7 +1116,6 @@ GameObject:
   - component: {fileID: 2985305972084382263}
   - component: {fileID: 3114723124505155316}
   - component: {fileID: -1921746699036021488}
-  - component: {fileID: -7324839309330726681}
   m_Layer: 0
   m_Name: PyroPrefab
   m_TagString: Untagged
@@ -1286,27 +1285,6 @@ MonoBehaviour:
   AutoObjectParentSync: 1
   SyncOwnerTransformWhenParented: 1
   AllowOwnerToParent: 0
---- !u!114 &-7324839309330726681
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8414434458223811319}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4217ef283067f3f4d9c1883fea6ac7f5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ShowTopMostFoldoutHeaderGroup: 1
-  attackRange: 30
-  fireRate: 3
-  damage: 5
-  targetLayers:
-    serializedVersion: 2
-    m_Bits: 64
-  firePoint: {fileID: 8701458382514833265}
-  projectilePrefab: {fileID: 1434627103891488, guid: 8cb55cbd2e7ba2b4db5dd828e8bb1d96, type: 3}
 --- !u!1 &8575551621497190828
 GameObject:
   m_ObjectHideFlags: 0
