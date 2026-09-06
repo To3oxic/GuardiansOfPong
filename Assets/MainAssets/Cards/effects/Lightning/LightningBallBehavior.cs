@@ -44,10 +44,7 @@ public class LightningBallBehavior : BallController
         if (IsServer)
         {
             networkSpeed.Value = 300;
-
         }
-
-
 
         if (IsServer)
         {
@@ -56,11 +53,8 @@ public class LightningBallBehavior : BallController
         }
         if (IsClient)
         {
-            Debug.Log($"[LightningBallBehavior] Lightning ball spawned on client at position {transform.position}");
         }
     }
-
-
 
     public void Update()
     {
@@ -93,21 +87,16 @@ public class LightningBallBehavior : BallController
 
         if (targetPaddle == null)
         {
-            Debug.LogWarning("[LightningBallBehavior] No opponent paddle found!");
             yield break;
         }
-
-        Debug.Log($"[LightningBallBehavior] Starting lightning sequence towards paddle at {targetPaddle.transform.position}");
 
         // Calculate total distance from ball to paddle
         float distanceToPaddle = Mathf.Abs(targetPaddle.transform.position.z - transform.position.z);
         float segmentDistance = distanceToPaddle * 2f / 9f;
 
-        Debug.Log($"[LightningBallBehavior] Distance to paddle: {distanceToPaddle}, Segment distance: {segmentDistance}");
         yield return new WaitForSeconds(stopDuration);
         // Calculate direction to paddle (positive or negative Z)
         float directionTowardsPaddle = targetPaddle.transform.position.z > transform.position.z ? 1f : -1f;
-
 
         // First bounce: move segmentDistance towards the paddle on one wall
         float firstBounceZ = transform.position.z + (segmentDistance * directionTowardsPaddle);
@@ -124,8 +113,6 @@ public class LightningBallBehavior : BallController
         float thirdTargetZ = secondBounceZ + (segmentDistance * directionTowardsPaddle);
         direction = new Vector3(GetWallX(true), transform.position.y, thirdTargetZ);
         yield return StartCoroutine(MoveBallToPosition(new Vector3(GetWallX(true), transform.position.y, thirdTargetZ)));
-
-        Debug.Log("[LightningBallBehavior] Lightning sequence complete, stopping for " + stopDuration + " seconds");
 
         // Stop for half a second
         yield return new WaitForSeconds(stopDuration);
@@ -147,20 +134,13 @@ public class LightningBallBehavior : BallController
     [ClientRpc]
     private void ExecuteLightningSequenceCallerClientRPC(Vector3 targetPosition, float time)
     {
-        Debug.Log($"[LightningBallBehavior] Client executing lightning move to position {targetPosition}");
         StartCoroutine(MoveClientBallToPosition(targetPosition, time));
     }
     private IEnumerator MoveClientBallToPosition(Vector3 _targetPosition, float _timeToMove)
     {
-
         Vector3 startPosition = transform.position;
 
         float timeToMove = _timeToMove;
-
-
-
-
-        Debug.Log($"[LightningBallBehavior] Moving from {startPosition} to {_targetPosition}, time: {timeToMove}s");
 
         float elapsedTime = 0f;
         while (elapsedTime < timeToMove)
@@ -180,10 +160,6 @@ public class LightningBallBehavior : BallController
         float distance = Vector3.Distance(startPosition, targetPosition);
         float timeToMove = distance / baseSpeed;
         ExecuteLightningSequenceCallerClientRPC(targetPosition, timeToMove);
-
-
-
-        Debug.Log($"[LightningBallBehavior] Moving from {startPosition} to {targetPosition}, time: {timeToMove}s");
 
         float elapsedTime = 0f;
         while (elapsedTime < timeToMove)
@@ -216,7 +192,6 @@ public class LightningBallBehavior : BallController
         if (IsSpawned)
         {
             GetComponent<NetworkObject>().Despawn();
-            Debug.Log("[LightningBallBehavior] Lightning ball despawned from network");
         }
         else
         {
@@ -238,7 +213,6 @@ public class LightningBallBehavior : BallController
         PaddleController paddle = other.GetComponent<PaddleController>();
         if (paddle != null)
         {
-            Debug.Log($"[LightningBallBehavior] Lightning ball hit paddle {paddle.name}, dealing massive damage");
             paddle.ReduceHP(damagePerHit); // Instant kill
             return;
         }
@@ -246,7 +220,6 @@ public class LightningBallBehavior : BallController
         IPlaceable placeable = other.GetComponent<IPlaceable>();
         if (placeable != null)
         {
-            Debug.Log($"[LightningBallBehavior] Lightning ball hit placeable, destroying it");
             placeable.TakeDamage(damagePerHit); // Instant kill
             return;
         }

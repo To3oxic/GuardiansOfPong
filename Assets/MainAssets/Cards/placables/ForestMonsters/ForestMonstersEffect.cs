@@ -25,7 +25,6 @@ public class ForestMonstersEffect : CardEffect
     public override float GetEffectRadius() => 2f;
     public override void StartPlacement(Action<Vector3, Vector3> onPlacementConfirmed)
     {
-
     }
 
     public override GameObject GetPreviewPrefab()
@@ -35,7 +34,6 @@ public class ForestMonstersEffect : CardEffect
         {
             return monstersToSpawn[0].prefab;
         }
-        Debug.LogError("[ForestMonstersEffect] No monster prefabs assigned!");
         return null;
     }
 
@@ -48,13 +46,11 @@ public class ForestMonstersEffect : CardEffect
     {
         if (GameManager.Instance == null)
         {
-            Debug.LogError("[ForestMonstersEffect] GameManager.Instance is null.");
             return null;
         }
 
         if (monstersToSpawn == null || monstersToSpawn.Count == 0)
         {
-            Debug.LogError("[ForestMonstersEffect] No monsters configured to spawn!");
             return null;
         }
 
@@ -84,7 +80,6 @@ public class ForestMonstersEffect : CardEffect
                 {
                     networkObject.Spawn();
                     networkObject.ChangeOwnership(ownerId);
-                    Debug.Log($"[ForestMonstersEffect] Spawned monster {monster.name} with owner ID: {ownerId}, NetworkObject ID: {networkObject.NetworkObjectId}");
 
                     // Apply leveled stats to the unit
                     BaseUnitController unit = monster.GetComponent<BaseUnitController>();

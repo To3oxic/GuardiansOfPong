@@ -72,9 +72,6 @@ public class BackendManager : MonoBehaviour
             if (request.result == UnityWebRequest.Result.Success)
             {
                 string responseText = request.downloadHandler.text;
-                Debug.Log("Login Response: " + responseText);
-
-                Debug.Log($"[BackendManager LOGIN] ========== PARSING RESPONSE ==========");
 
                 // Parse response
                 try
@@ -88,28 +85,22 @@ public class BackendManager : MonoBehaviour
                         if (!string.IsNullOrEmpty(response.session_id))
                         {
                             sessionId = response.session_id;
-                            Debug.Log($"[BackendManager LOGIN] ✓ Session ID from response: {sessionId}");
                         }
 
                         if (!string.IsNullOrEmpty(response.csrf_token))
                         {
                             csrfToken = response.csrf_token;
-                            Debug.Log($"[BackendManager LOGIN] ✓ CSRF Token from response: {csrfToken}");
                         }
 
                         // If tokens not in response, try to extract from Set-Cookie headers
                         if (string.IsNullOrEmpty(sessionId) || string.IsNullOrEmpty(csrfToken))
                         {
-                            Debug.Log($"[BackendManager LOGIN] Tokens missing from response, trying headers...");
-
                             string setCookieDirect = request.GetResponseHeader("Set-Cookie");
                             string setCookieLower = request.GetResponseHeader("set-cookie");
                             string setCookieHeader = setCookieDirect ?? setCookieLower;
 
                             if (!string.IsNullOrEmpty(setCookieHeader))
                             {
-                                Debug.Log($"[BackendManager LOGIN] Set-Cookie header: {setCookieHeader}");
-
                                 // Split by comma to separate multiple Set-Cookie values
                                 string[] cookieEntries = setCookieHeader.Split(',');
 
@@ -138,14 +129,11 @@ public class BackendManager : MonoBehaviour
                                         if (name.ToLower() == "sessionid" && string.IsNullOrEmpty(sessionId))
                                         {
                                             sessionId = value;
-                                            Debug.Log($"[BackendManager LOGIN] ✓ Session ID from header: {sessionId}");
                                         }
                                         else if (name.ToLower() == "csrftoken" && string.IsNullOrEmpty(csrfToken))
                                         {
                                             csrfToken = value;
                                             csrfCookie = value;  // Also store as cookie
-                                            Debug.Log($"[BackendManager LOGIN] ✓ CSRF Token from header: {csrfToken}");
-                                            Debug.Log($"[BackendManager LOGIN] ✓ CSRF Cookie from header: {csrfCookie}");
                                         }
                                     }
                                 }
@@ -180,30 +168,22 @@ public class BackendManager : MonoBehaviour
                                                 value = value.Split(',')[0].Trim();
                                             }
                                             csrfCookie = value;
-                                            Debug.Log($"[BackendManager LOGIN] ✓ CSRF Cookie from Set-Cookie: {csrfCookie}");
                                         }
                                     }
                                 }
                             }
                         }
 
-                        Debug.Log($"[BackendManager LOGIN] ✓ Login successful for player: {response.user.username}");
-                        Debug.Log($"[BackendManager LOGIN] Session ID: {sessionId}");
-                        Debug.Log($"[BackendManager LOGIN] CSRF Token: {csrfToken}");
-                        Debug.Log($"[BackendManager LOGIN] ========== END PARSING ==========");
-
                         OnLoginSuccess?.Invoke(cachedPlayerData);
                         OnDataLoaded?.Invoke(cachedPlayerData);
                     }
                     else
                     {
-                        Debug.LogError("[BackendManager] Login response success=false");
                         OnLoginFailed?.Invoke("Login response indicates failure");
                     }
                 }
                 catch (System.Exception e)
                 {
-                    Debug.LogError($"[BackendManager] Failed to parse login response: {e.Message}");
                     OnLoginFailed?.Invoke($"Parse error: {e.Message}");
                 }
             }
@@ -214,7 +194,6 @@ public class BackendManager : MonoBehaviour
                 {
                     errorMsg += " - " + request.downloadHandler.text;
                 }
-                Debug.LogError(errorMsg);
                 OnLoginFailed?.Invoke(errorMsg);
             }
         }
@@ -338,7 +317,6 @@ public class BackendManager : MonoBehaviour
     /// </summary>
     public void TestLogin()
     {
-        Debug.Log("=== Backend Test Started ===");
         Login("testplayer2", "testpass123");
     }
 
@@ -347,7 +325,6 @@ public class BackendManager : MonoBehaviour
     /// </summary>
     public void LoginAsPlayer1()
     {
-        Debug.Log("=== Logging in as Player 1 ===");
         Login("testplayer", "testpass123");
     }
 
@@ -356,7 +333,6 @@ public class BackendManager : MonoBehaviour
     /// </summary>
     public void LoginAsPlayer2()
     {
-        Debug.Log("=== Logging in as Player 2 ===");
         Login("testplayer2", "testpass123");
     }
 
@@ -397,7 +373,6 @@ public class BackendManager : MonoBehaviour
             }
             else
             {
-                Debug.LogWarning($"[SAVE-DECK] ✗ No CSRF token available!");
             }
 
             // Build cookie header with BOTH sessionid AND csrftoken cookies
@@ -407,65 +382,49 @@ public class BackendManager : MonoBehaviour
             if (!string.IsNullOrEmpty(sessionId))
             {
                 cookies.Add($"sessionid={sessionId}");
-                Debug.Log($"[SAVE-DECK] ✓ Adding sessionid cookie");
             }
             else
             {
-                Debug.LogWarning($"[SAVE-DECK] ✗ No session ID available!");
             }
 
             if (!string.IsNullOrEmpty(csrfCookie))
             {
                 cookies.Add($"csrftoken={csrfCookie}");
-                Debug.Log($"[SAVE-DECK] ✓ Adding csrftoken cookie: {csrfCookie}");
             }
             else
             {
-                Debug.LogWarning($"[SAVE-DECK] ⚠ No CSRF cookie available!");
             }
 
             if (cookies.Count > 0)
             {
                 string cookieHeader = string.Join("; ", cookies);
                 request.SetRequestHeader("Cookie", cookieHeader);
-                Debug.Log($"[SAVE-DECK] ✓ Cookie header: {cookieHeader}");
             }
-
-            Debug.Log($"[SAVE-DECK] Saving deck with {cardIds.Count} cards, guardian={guardianId}, legend_stone={legendStoneId}");
 
             yield return request.SendWebRequest();
 
             if (request.result == UnityWebRequest.Result.Success)
             {
                 string responseText = request.downloadHandler.text;
-                Debug.Log($"[SAVE-DECK] ✓ Status: {request.responseCode}");
-                Debug.Log($"[SAVE-DECK] Response: {responseText}");
 
                 try
                 {
                     var response = JsonUtility.FromJson<SaveDeckResponse>(responseText);
                     if (response.success)
                     {
-                        Debug.Log("[SAVE-DECK] ✅ SUCCESS! Deck saved!");
-                        Debug.Log($"[SAVE-DECK] Deck ID: {response.deck.id}");
-                        Debug.Log($"[SAVE-DECK] Deck Name: {response.deck.deck_name}");
                     }
                     else
                     {
-                        Debug.LogError($"[SAVE-DECK] ❌ Failed: {response.message}");
                     }
                 }
                 catch (System.Exception e)
                 {
-                    Debug.LogError($"[SAVE-DECK] ❌ Parse error: {e.Message}");
                 }
             }
             else
             {
-                Debug.LogError($"[SAVE-DECK] ❌ Request failed: {request.error} (Status: {request.responseCode})");
                 if (!string.IsNullOrEmpty(request.downloadHandler?.text))
                 {
-                    Debug.LogError($"[SAVE-DECK] Response: {request.downloadHandler.text}");
                 }
             }
         }

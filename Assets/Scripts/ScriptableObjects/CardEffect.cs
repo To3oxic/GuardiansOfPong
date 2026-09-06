@@ -6,7 +6,6 @@ public abstract class CardEffect : ScriptableObject
     public virtual bool RequiresPlacement() => false;
     public virtual void StartPlacement(System.Action<Vector3, Vector3> onPlacementConfirmed)
     {
-
     }
 
     /// <summary>
@@ -15,7 +14,6 @@ public abstract class CardEffect : ScriptableObject
     public virtual void ConfirmPlacement(Vector3 position, Vector3 direction)
     {
         // Override this in derived classes if needed
-        Debug.Log($"[CardEffect] Placement confirmed at {position} with direction {direction}");
     }
 
     /// <summary>
@@ -34,7 +32,6 @@ public abstract class CardEffect : ScriptableObject
 
     public virtual GameObject ApplyEffect(ulong playerId, Vector3 position, Vector3 direction, CardData cardData, int cardLevel = 1)
     {
-        Debug.LogWarning("[CardEffect] ApplyEffect with position/direction not implemented for this card.");
         return null;
     }
 
@@ -48,12 +45,10 @@ public abstract class CardEffect : ScriptableObject
 
         // Unit will automatically play spawn animation in OnNetworkSpawn()
         // Particle effect is set directly on the prefab in the Inspector
-        Debug.Log("[CardEffect] Unit spawned and will play animation automatically.");
     }
 
     public virtual void ApplyVisualEffect(ulong playerId, Vector3 position = default, Vector3 direction = default)
     {
         // Legacy method - kept for compatibility with existing code
-        Debug.Log("[CardEffect] ApplyVisualEffect called (legacy).");
     }
 }

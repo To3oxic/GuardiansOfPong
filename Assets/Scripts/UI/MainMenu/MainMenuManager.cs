@@ -43,8 +43,6 @@ public class MainMenuManager : MonoBehaviour
         gameBoardZone.Initialize();
         cardSelectionZone.Initialize();
         shopZone.Initialize();
-
-        Debug.Log("[MainMenuManager] MainMenu initialized with rotating cube system");
     }
 
     private void LoadPlayerData()
@@ -53,8 +51,6 @@ public class MainMenuManager : MonoBehaviour
         // - Player account info (username, level, rank, coins)
         // - Player's saved decks
         // - Player's unlocked units/guardians
-
-        Debug.Log("[MainMenuManager] Loading player data from database...");
     }
 
     private void UpdatePlayerInfo()
@@ -65,7 +61,6 @@ public class MainMenuManager : MonoBehaviour
 
     private void OnStartGamePressed()
     {
-        Debug.Log("[MainMenuManager] Start Game pressed - connecting to matchmaking...");
         // TODO: Connect to backend matchmaking service
         // TODO: Show "Searching for opponent..." UI
     }

@@ -21,8 +21,6 @@ public class CardSelectionZone : MonoBehaviour
 
     public void Initialize()
     {
-        Debug.Log("[CardSelectionZone] Initializing...");
-
         // Spawn legend guardian in background
         SpawnLegend();
 
@@ -39,8 +37,6 @@ public class CardSelectionZone : MonoBehaviour
         // Instantiate it at legendSpawnPoint
         // Make sure it has idle animation
 
-        Debug.Log("[CardSelectionZone] Spawning legend...");
-
         if (legendSpawnPoint != null && selectedLegendPrefab != null)
         {
             legendInstance = Instantiate(selectedLegendPrefab, legendSpawnPoint.position,
@@ -56,8 +52,6 @@ public class CardSelectionZone : MonoBehaviour
         // TODO: Fetch player's deck from PlayerData
         // Instantiate CardHolderUI prefabs in a grid
 
-        Debug.Log("[CardSelectionZone] Creating card grid...");
-
         // Example layout:
         // CardData[] playerDeck = PlayerData.GetPlayerDeck();
         // cardDisplays = new CardHolderUI[playerDeck.Length];
@@ -67,7 +61,7 @@ public class CardSelectionZone : MonoBehaviour
         //     CardHolderUI cardUI = Instantiate(cardPrefab, cardGridParent);
         //     cardUI.Setup(playerDeck[i]);
         //     cardDisplays[i] = cardUI;
-        //     
+        //
         //     // Position in grid
         //     LayoutElement layout = cardUI.GetComponent<LayoutElement>();
         //     // Set position based on i and cardsPerRow
@@ -78,8 +72,6 @@ public class CardSelectionZone : MonoBehaviour
     {
         // TODO: Position legend name at top
         // TODO: Position deck info at bottom
-
-        Debug.Log("[CardSelectionZone] Positioning UI...");
     }
 
     public void RefreshCardDisplay()

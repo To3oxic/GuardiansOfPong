@@ -116,13 +116,10 @@ public class CardManager : MonoBehaviour
     }
     public void OnCardPlayed(CardData card, CardHolderUI playedSlot) // Added playedSlot parameter
     {
-        Debug.Log($"[CardManager] OnCardPlayed called for card: {card?.cardName ?? "NULL"}, Mana: {localPaddle?.currentMana.Value ?? 0}/{card?.manaCost ?? 0}");
-
         if (localPaddle != null && localPaddle.currentMana.Value >= (int)card.manaCost)
         {
             if (card.effect.RequiresPlacement())
             {
-                Debug.Log($"[CardManager] Card {card.cardName} requires placement");
                 card.effect.StartPlacement((position, direction) =>
                 {
                     // Double-check placement is in valid area (z: 0-40, x: -25 to 25)
@@ -131,20 +128,17 @@ public class CardManager : MonoBehaviour
 
                     if (isValidPlacement)
                     {
-                        Debug.Log($"[CardManager] Valid placement at {position}, calling ApplyCardEffectServerRpc");
                         GameManager.Instance.ApplyCardEffectServerRpc(card.cardName, NetworkManager.Singleton.LocalClientId, position, direction);
                         HandleCardQueueAndRefreshSlots(card, playedSlot);
                     }
                     else
                     {
-                        Debug.LogWarning($"[CardManager] Card placement rejected - position {position} is outside valid area");
                     }
                 });
             }
             else
             {
                 // Non-placement cards are always valid
-                Debug.Log($"[CardManager] Non-placement card {card.cardName} - calling ApplyCardEffectServerRpc");
                 GameManager.Instance.ApplyCardEffectServerRpc(card.cardName, NetworkManager.Singleton.LocalClientId);
                 HandleCardQueueAndRefreshSlots(card, playedSlot);
             }
@@ -152,7 +146,6 @@ public class CardManager : MonoBehaviour
         else
         {
             // Optionally, provide feedback to the player here (e.g., sound effect, UI flash)
-            Debug.LogWarning($"[CardManager] Insufficient mana to play card {card.cardName}. Required: {card.manaCost}, Available: {localPaddle?.currentMana.Value ?? 0}");
         }
     }
     public void HandleCardQueueAndRefreshSlots(CardData playedCardData, CardHolderUI playedSlot)
@@ -186,7 +179,6 @@ public class CardManager : MonoBehaviour
 
             // Scale based on radius
             placementPreviewObject.transform.localScale = new Vector3(radius, radius, 1f);
-            Debug.Log($"[CardManager] Showing placement preview at {screenPosition} with radius {radius}.");
 
             // Set color
             Image previewImage = placementPreviewObject.GetComponent<Image>();

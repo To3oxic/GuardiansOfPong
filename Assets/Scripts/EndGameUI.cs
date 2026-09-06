@@ -26,7 +26,6 @@ public class EndGameUI : MonoBehaviour
 
     public void ShowResult(bool isWinner, int starCount, float matchDuration)
     {
-        Debug.Log($"[EndGameUI] ShowResult called: isWinner={isWinner}, starCount={starCount}, matchDuration={matchDuration}");
         gameObject.SetActive(true);
 
         if (resultText)
@@ -36,7 +35,6 @@ public class EndGameUI : MonoBehaviour
         }
         else
         {
-            Debug.LogError("[EndGameUI] resultText is null!");
         }
 
         if (stars != null)
@@ -49,7 +47,6 @@ public class EndGameUI : MonoBehaviour
         }
         else
         {
-            Debug.LogError("[EndGameUI] stars array is null!");
         }
 
         int minutes = Mathf.FloorToInt(matchDuration / 60f);
@@ -75,7 +72,6 @@ public class EndGameUI : MonoBehaviour
 
     private void OnLeaveButtonClicked()
     {
-        Debug.Log("[EndGameUI] Leave button clicked");
         Time.timeScale = 1f; // Ensure time is running before loading scene
         SceneManager.LoadScene("MainMenu"); // Load main menu scene
     }

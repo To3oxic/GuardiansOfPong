@@ -107,8 +107,6 @@ public class HPBarPrefabCreator : MonoBehaviour
         hpBarController.mediumHPColor = mediumHPColor;
         hpBarController.lowHPColor = lowHPColor;
 
-        Debug.Log($"[HPBarPrefabCreator] Created HP bar prefab: {hpBar.name}");
-
         // Select the created object in hierarchy
 #if UNITY_EDITOR
         UnityEditor.Selection.activeGameObject = hpBar;

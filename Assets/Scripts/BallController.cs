@@ -51,24 +51,18 @@ public class BallController : NetworkBehaviour
         if (IsServer)
         {
             networkSpeed.Value = speed;
-
         }
 
         Instance = this;
         lastSpawnTime = Time.time;
-
-
     }
 
     public void InitializeAudio()
     {
-        Debug.Log("[BallController] Initializing audio system...");
-
         // Setup rolling audio source if not assigned
         if (rollingAudioSource == null)
         {
             rollingAudioSource = gameObject.AddComponent<AudioSource>();
-            Debug.Log("[BallController] Created new AudioSource for rolling sound");
         }
 
         // Configure rolling audio source
@@ -83,8 +77,6 @@ public class BallController : NetworkBehaviour
         impactAudioSource.loop = false;
         impactAudioSource.playOnAwake = false;
         impactAudioSource.volume = 0.7f;
-
-        Debug.Log($"[BallController] Audio system initialized - Rolling clip: {(rollingBallClip != null ? "assigned" : "MISSING")}, Collision clip: {(collisionClip != null ? "assigned" : "MISSING")}, Goal clip: {(goalScoredClip != null ? "assigned" : "MISSING")}");
     }
 
     public void LaunchBall()
@@ -135,8 +127,6 @@ public class BallController : NetworkBehaviour
 
         // Server waits 1 second for animation, then starts moving ball
         StartCoroutine(ServerLaunchDelay());
-
-        Debug.Log($"[BallController] Ball launch initiated at angle {angleInDegrees}° -> {launchDirection}");
     }
 
     /// <summary>
@@ -150,8 +140,6 @@ public class BallController : NetworkBehaviour
 
         // Sync direction and speed to clients for normal gameplay
         SyncBallStateOnCollisionClientRpc(launchDirection, speed);
-
-        Debug.Log($"[BallController] Server starting normal movement with direction {launchDirection}");
     }
 
     /// <summary>
@@ -174,12 +162,8 @@ public class BallController : NetworkBehaviour
         transform.position = trajectoryStartPos;
         transform.localScale = new Vector3(7f, 7f, 7f);
 
-        Debug.Log($"[BallController] Client playing launch animation from {trajectoryStartPos}");
-
         // Play the parabolic trajectory animation
         yield return StartCoroutine(MoveWithParabolicTrajectory(0.75f));
-
-        Debug.Log($"[BallController] Client launch animation complete");
     }
 
     public void MoveBallManually()
@@ -241,7 +225,6 @@ public class BallController : NetworkBehaviour
                     GameManager.Instance.OpponentLosesPoint();
                     // Destroy current ball before calling scoring
                     DestroyCurrentBall();
-
                 }
             }
             else // newPosition.z < player1GoalZ
@@ -252,7 +235,6 @@ public class BallController : NetworkBehaviour
                     GameManager.Instance.PlayerLosesPoint();
                     // Destroy current ball before calling scoring
                     DestroyCurrentBall();
-
                 }
             }
             return; // Don't update position, let GameManager.ResetBall() handle it
@@ -279,16 +261,8 @@ public class BallController : NetworkBehaviour
         if (launchDirection.magnitude > 0.1f && speed > 0.1f)
         {
             transform.Rotate(rotationAxis, rotationAmount, Space.World);
-
-            // Debug rotation for testing
-            if (Time.frameCount % 120 == 0) // Every 2 seconds
-            {
-                DebugHelper.Log($"[BallController] Speed: {speed:F1}, Rotation Rate: {rotationAmount:F2}°/frame (slower rotation)");
-            }
         }
     }
-
-
 
     // NEW TRIGGER-BASED COLLISION DETECTION FOR CUSTOM PHYSICS
     public void OnTriggerEnter(Collider other)
@@ -312,8 +286,6 @@ public class BallController : NetworkBehaviour
 
         // Sync speed to clients
         networkSpeed.Value = speed;
-
-        Debug.Log($"[BallController] Trigger collision with {other.name}, tag: '{other.tag}'");
 
         // Handle paddle collision (trigger-based)
         if (other.CompareTag("Paddle"))
@@ -343,7 +315,6 @@ public class BallController : NetworkBehaviour
             launchDirection = new Vector3(x, 0f, z).normalized;
 
             PlayCollisionSoundClientRpc();
-            Debug.Log($"[BallController] Paddle bounce at angle {bounceAngle}° -> {launchDirection}");
 
             // Apply damage to paddle
             PaddleController paddle = other.GetComponent<PaddleController>();
@@ -374,7 +345,6 @@ public class BallController : NetworkBehaviour
 
                 // Keep same direction (no bounce)
                 PlayCollisionSoundClientRpc();
-                Debug.Log($"[BallController] Ball penetrated through {unit.name} (had {unitHP} HP, took {calculatedDamage} damage), slowed to {speed:F1}");
 
                 // Sync state to clients
                 SyncBallStateOnCollisionClientRpc(launchDirection, speed);
@@ -399,7 +369,6 @@ public class BallController : NetworkBehaviour
 
                 launchDirection = launchDirection.normalized;
                 PlayCollisionSoundClientRpc();
-                Debug.Log($"[BallController] Ball bounced off {unit.name} (had {unitHP} HP, took {calculatedDamage} damage) - New direction: {launchDirection}");
 
                 // Sync state to clients after bounce
                 SyncBallStateOnCollisionClientRpc(launchDirection, speed);
@@ -432,14 +401,11 @@ public class BallController : NetworkBehaviour
             launchDirection = launchDirection.normalized;
             PlayCollisionSoundClientRpc();
 
-            Debug.Log($"[BallController] Placeable bounce - New direction: {launchDirection}");
-
             // Sync direction and speed to clients after placeable collision
             SyncBallStateOnCollisionClientRpc(launchDirection, speed);
         }
         else
         {
-            Debug.Log($"[BallController] Trigger collision with '{other.name}' tag '{other.tag}' - no special handling needed (walls and goals handled by position detection)");
         }
     }
 
@@ -454,17 +420,12 @@ public class BallController : NetworkBehaviour
 
         ulong associatedPlayerId = legendStone.GetAssociatedPlayerId();
 
-        Debug.Log($"[BallController] Hit legend stone for player {associatedPlayerId} (OwnerClientId: {legendStone.OwnerClientId}) on server.");
-
         if (GameManager.Instance != null)
         {
-            Debug.Log($"[BallController] *** ABOUT TO CALL TriggerLegendStoneDefeat for player {associatedPlayerId} ***");
             GameManager.Instance.TriggerLegendStoneDefeat(associatedPlayerId);
-            Debug.Log($"[BallController] *** FINISHED CALLING TriggerLegendStoneDefeat for player {associatedPlayerId} ***");
         }
         else
         {
-            Debug.LogError("[BallController] GameManager.Instance is null. Cannot process legend stone defeat.");
         }
     }
 
@@ -503,9 +464,6 @@ public class BallController : NetworkBehaviour
         trailRenderer.emitting = true;
     }
 
-
-
-
     void Update()
     {
         if (isAnimatingLaunch)
@@ -523,7 +481,6 @@ public class BallController : NetworkBehaviour
         }
 
         // Host: do both server and client updates
-
     }
 
     private void SimulateBallMovementLocally()
@@ -556,7 +513,6 @@ public class BallController : NetworkBehaviour
         // Debug velocity and threshold check
         if (Time.frameCount % 60 == 0) // Debug every second
         {
-            Debug.Log($"[BallController] Rolling audio check: Velocity={currentVelocity:F2}, Threshold={movementThreshold}, Moving={currentVelocity > movementThreshold}, AudioClip={(rollingBallClip != null ? "assigned" : "missing")}");
         }
 
         // Check if ball is moving above threshold
@@ -568,11 +524,9 @@ public class BallController : NetworkBehaviour
                 if (rollingBallClip != null)
                 {
                     rollingAudioSource.Play();
-                    Debug.Log($"[BallController] Started rolling sound - Velocity: {currentVelocity:F2}");
                 }
                 else
                 {
-                    Debug.LogWarning("[BallController] Cannot play rolling sound - rollingBallClip is not assigned!");
                 }
             }
 
@@ -592,7 +546,6 @@ public class BallController : NetworkBehaviour
             if (rollingAudioSource.isPlaying)
             {
                 rollingAudioSource.Stop();
-                Debug.Log($"[BallController] Stopped rolling sound - Velocity too low: {currentVelocity:F2}");
             }
         }
     }
@@ -607,7 +560,6 @@ public class BallController : NetworkBehaviour
         {
             impactAudioSource.clip = collisionClip;
             impactAudioSource.Play();
-            Debug.Log("[BallController] Playing collision sound on client");
         }
     }
 
@@ -627,7 +579,6 @@ public class BallController : NetworkBehaviour
 
             impactAudioSource.clip = goalScoredClip;
             impactAudioSource.Play();
-            Debug.Log("[BallController] Playing goal sound on client");
         }
     }
 
@@ -658,8 +609,6 @@ public class BallController : NetworkBehaviour
         // Update client's ball state to match server after collision
         launchDirection = newDirection.normalized;
         speed = newSpeed;
-
-        DebugHelper.Log($"[BallController] Synced ball state after collision - Direction: {launchDirection}, Speed: {speed:F1}");
     }
 
     private IEnumerator EnableTrailNextFrame()
@@ -668,14 +617,12 @@ public class BallController : NetworkBehaviour
         trailRenderer.emitting = true;
     }
 
-
     public void IncreaseSpeed(float amount)
     {
         if (!IsServer) return;
 
         speed += amount;
         networkSpeed.Value = speed;
-        Debug.Log($"Ball speed increased to {speed}");
     }
 
     public void DecreaseSpeed(float amount)
@@ -684,7 +631,6 @@ public class BallController : NetworkBehaviour
 
         speed = Mathf.Max(5f, speed - amount);
         networkSpeed.Value = speed;
-        Debug.Log($"Ball speed decreased to {speed}");
     }
 
     public Vector3 GetVelocity()
@@ -701,7 +647,6 @@ public class BallController : NetworkBehaviour
     {
         if (!IsServer) return;
         launchDirection = newDirection.normalized;
-        Debug.Log($"[BallController] Direction set to {launchDirection}");
     }
 
     public void SetSpeed(float newSpeed)
@@ -709,7 +654,6 @@ public class BallController : NetworkBehaviour
         if (!IsServer) return;
         speed = Mathf.Max(0f, newSpeed);
         networkSpeed.Value = speed;
-        Debug.Log($"[BallController] Speed set to {speed}");
     }
 
     public void SetLaunchDirection(Vector3 position, Vector3 targetPosition)
@@ -717,7 +661,6 @@ public class BallController : NetworkBehaviour
         if (!IsServer) return;
         Vector3 direction = (targetPosition - position).normalized;
         launchDirection = direction;
-        Debug.Log($"[BallController] Launch direction set towards {targetPosition}");
     }
 
     public void DestroyCurrentBall()
@@ -726,12 +669,10 @@ public class BallController : NetworkBehaviour
         if (ballNetObj != null && ballNetObj.IsSpawned)
         {
             ballNetObj.Despawn();
-            Debug.Log("[BallController] Ball despawned from network");
         }
         else
         {
             Destroy(gameObject);
-            Debug.Log("[BallController] Ball destroyed");
         }
     }
 
@@ -745,8 +686,6 @@ public class BallController : NetworkBehaviour
 
         transform.position = startPosition;
         float elapsedTime = 0f;
-
-        Debug.Log($"[BallController] Shot from outside map at {startPosition}");
 
         while (elapsedTime < duration)
         {
@@ -775,10 +714,7 @@ public class BallController : NetworkBehaviour
         if (dropParticleSystem != null)
         {
             dropParticleSystem.Play();
-            Debug.Log("[BallController] Drop particle system activated");
         }
-
-        Debug.Log("[BallController] Shot complete, ball landed at center");
     }
 
     /// <summary>
@@ -789,8 +725,6 @@ public class BallController : NetworkBehaviour
     {
         Vector3 startPosition = transform.position;
         float elapsedTime = 0f;
-
-        Debug.Log($"[BallController] Starting parabolic trajectory from {startPosition} to (0, 0, 0)");
 
         while (elapsedTime < duration)
         {
@@ -806,14 +740,12 @@ public class BallController : NetworkBehaviour
             float parabolaHeight = Mathf.Sqrt(x) * 5 + 1.5f;  // Scale down x^2 for reasonable heights
 
             Vector3 position = new Vector3(posX, parabolaHeight, posZ);
-            Debug.Log($"[BallController] Parabolic position at t={t:F2}: {position}, Height={parabolaHeight:F2}");
             transform.position = position;
             float scale = 7f - (4f * t);  // 7 -> 3
             transform.localScale = new Vector3(scale, scale, scale);
 
             yield return null;
         }
-
 
         // Ensure final position is exactly (0, 0, 0)
         transform.position = new Vector3(0f, 1.5f, 0f);
@@ -822,10 +754,7 @@ public class BallController : NetworkBehaviour
         if (dropParticleSystem != null)
         {
             dropParticleSystem.Play();
-            Debug.Log("[BallController] Drop particle system activated");
         }
-
-        Debug.Log("[BallController] Parabolic trajectory complete, ball at (0, 0, 0)");
     }
 
     /// <summary>
@@ -837,7 +766,6 @@ public class BallController : NetworkBehaviour
 
         // First trajectory
         transform.position = new Vector3(40f, 15f, 40f);
-        Debug.Log("[BallController] Test reset to (40, 15, 40)");
         yield return StartCoroutine(MoveWithParabolicTrajectory(1f));
 
         // Wait and repeat
@@ -845,7 +773,6 @@ public class BallController : NetworkBehaviour
 
         // Second trajectory
         transform.position = new Vector3(40f, 15f, 40f);
-        Debug.Log("[BallController] Test reset to (40, 15, 40) - second run");
         yield return StartCoroutine(MoveWithParabolicTrajectory(3f));
     }
 }

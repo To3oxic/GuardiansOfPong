@@ -76,10 +76,7 @@ public class SpiritBeamController : MonoBehaviour
         if (beamParticleSystem != null && !beamParticleSystem.isPlaying)
         {
             beamParticleSystem.Play();
-            Debug.Log($"[SpiritBeamController] Started particle system for beam from {stone.name}");
         }
-
-        Debug.Log($"[SpiritBeamController] Initialized beam from {stone.name} to {(paddle != null ? paddle.name : "paddle position")}");
     }
 
     public void InitializeWithPaddlePrefab(Transform stone, GameObject paddlePrefab, BeamSettings settings = null)
@@ -108,10 +105,7 @@ public class SpiritBeamController : MonoBehaviour
         if (beamParticleSystem != null && !beamParticleSystem.isPlaying)
         {
             beamParticleSystem.Play();
-            Debug.Log($"[SpiritBeamController] Started particle system for prefab beam from {stone.name}");
         }
-
-        Debug.Log($"[SpiritBeamController] Initialized beam from {stone.name} towards expected paddle position at {expectedPaddlePosition}");
     }
 
     private Vector3 CalculateExpectedPaddlePosition(Vector3 stonePosition, GameObject paddlePrefab)
@@ -130,7 +124,6 @@ public class SpiritBeamController : MonoBehaviour
     {
         if (beamParticleSystem == null)
         {
-            Debug.LogWarning("[SpiritBeamController] No ParticleSystem assigned!");
             return;
         }
 
@@ -210,13 +203,11 @@ public class SpiritBeamController : MonoBehaviour
 
         if (stoneTransform == null)
         {
-            Debug.LogWarning("[SpiritBeamController] Stone transform is null!");
             return;
         }
 
         if (paddleTransform == null)
         {
-            Debug.LogWarning("[SpiritBeamController] Paddle transform is null!");
             return;
         }
 
@@ -250,7 +241,6 @@ public class SpiritBeamController : MonoBehaviour
             // Debug the beam direction every few frames
             if (Time.frameCount % 60 == 0) // Every 60 frames (roughly once per second at 60fps)
             {
-                Debug.Log($"[SpiritBeamController] Beam from {stoneTransform.position} to {paddleTransform.position}, direction: {beamDirection}, distance: {currentDistance:F2}");
             }
         }
     }

@@ -51,8 +51,6 @@ public class PlayerStates : MonoBehaviour
 
         Instance = this;
         DontDestroyOnLoad(gameObject);
-
-        Debug.Log("[PlayerStates] Initialized");
     }
 
     /// <summary>
@@ -78,8 +76,6 @@ public class PlayerStates : MonoBehaviour
         PlayFabId = playfabId;
         DisplayName = displayName;
         CreatedTime = createdTime;
-
-        Debug.Log($"[PlayerStates] Profile set: {DisplayName} ({PlayFabId})");
     }
 
     /// <summary>
@@ -90,7 +86,6 @@ public class PlayerStates : MonoBehaviour
         CardCollection = collection ?? new PlayerCardCollection();
         _cardsLoaded = true;
 
-        Debug.Log($"[PlayerStates] Card collection loaded: {CardCollection.cards.Count} cards");
         OnCardCollectionLoaded?.Invoke();
 
         CheckLoginComplete();
@@ -104,7 +99,6 @@ public class PlayerStates : MonoBehaviour
         AllDecks = decks ?? new Dictionary<string, PlayFabBackendManager.SavedDeck>();
         _decksLoaded = true;
 
-        Debug.Log($"[PlayerStates] All decks loaded: {AllDecks.Count} decks");
         OnDecksLoaded?.Invoke();
 
         CheckLoginComplete();
@@ -120,12 +114,10 @@ public class PlayerStates : MonoBehaviour
 
         if (deck != null)
         {
-            Debug.Log($"[PlayerStates] Active deck loaded: {deck?.DeckName} with {deck?.Cards.Count} cards");
             OnActiveDeckLoaded?.Invoke(deck.Value);
         }
         else
         {
-            Debug.Log("[PlayerStates] No active deck found");
         }
 
         CheckLoginComplete();
@@ -142,8 +134,6 @@ public class PlayerStates : MonoBehaviour
             Cards = cards,
             LastModified = DateTime.UtcNow
         };
-
-        Debug.Log($"[PlayerStates] Active deck updated: {deckName} with {cards.Count} cards");
     }
 
     /// <summary>
@@ -154,7 +144,6 @@ public class PlayerStates : MonoBehaviour
         if (_cardsLoaded && _activeDeckLoaded)
         {
             _isLoginComplete = true;
-            Debug.Log("[PlayerStates] === LOGIN COMPLETE ===");
             OnPlayerDataLoaded?.Invoke();
         }
     }
@@ -179,8 +168,6 @@ public class PlayerStates : MonoBehaviour
         _cardsLoaded = false;
         _decksLoaded = false;
         _activeDeckLoaded = false;
-
-        Debug.Log("[PlayerStates] Player data reset");
     }
 
     /// <summary>

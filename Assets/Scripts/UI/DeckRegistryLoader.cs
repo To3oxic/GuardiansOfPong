@@ -21,19 +21,6 @@ public class DeckRegistryLoader : MonoBehaviour
         if (loaded != null)
         {
             loaded.InitializeRegistry();
-#if UNITY_EDITOR
-            Debug.Log("[DeckRegistryLoader] DeckRegistry loaded and initialized for menu scene.");
-#endif
         }
-        else
-        {
-            Debug.LogError($"[DeckRegistryLoader] Could not find DeckRegistry in Resources ('{resourcesKey}') and no asset assigned. Deck UI will be empty.");
-        }
-
-        var reg = DeckRegistry.Instance;
-        if (reg == null)
-            Debug.LogError("[DeckRegistryLoader] DeckRegistry not found in Resources.");
-        else
-            Debug.Log("[DeckRegistryLoader] DeckRegistry initialized.");
     }
 }

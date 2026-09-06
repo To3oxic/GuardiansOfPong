@@ -119,15 +119,12 @@ public class GameManager : NetworkBehaviour
     private float manaGenerationTimer = 0f;
     private const float MANA_GENERATION_INTERVAL = 2f; // Generate 1 mana every 3 seconds
 
-
-
     private void Awake()
     {
         Application.targetFrameRate = 60;
         // GameManager is a scene-based NetworkObject, don't use DontDestroyOnLoad
         if (Instance != null && Instance != this)
         {
-
             Destroy(gameObject);
             return;
         }
@@ -143,13 +140,11 @@ public class GameManager : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
-
         if (IsServer)
         {
             NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
             NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnected;
         }
-
     }
 
     public override void OnDestroy()
@@ -159,7 +154,6 @@ public class GameManager : NetworkBehaviour
             NetworkManager.Singleton.OnClientConnectedCallback -= OnClientConnected;
             NetworkManager.Singleton.OnClientDisconnectCallback -= OnClientDisconnected;
         }
-
     }
 
     private void OnClientConnected(ulong clientId)
@@ -277,7 +271,6 @@ public class GameManager : NetworkBehaviour
                 newMana = Mathf.Min(newMana, paddle.maxMana); // Clamp to max mana
                 paddle.currentMana.Value = newMana;
 
-
                 // Send ClientRpc to trigger animation only for this player
                 OnManaGeneratedClientRpc(paddle.OwnerClientId, newMana, new ClientRpcParams
                 {
@@ -314,7 +307,6 @@ public class GameManager : NetworkBehaviour
     // Called by PaddleController when HP changes via RPC
     public void OnPaddleHPChanged(ulong paddleOwnerClientId, float newHP, float maxHP, float damageDealt)
     {
-
         // Initialize HP bars if not done yet
         if (!hpBarsInitialized)
         {
@@ -369,7 +361,6 @@ public class GameManager : NetworkBehaviour
     {
         if (!IsServer) return;
 
-
         // Get assigned player index from playerIndexMap
         if (!playerIndexMap.TryGetValue(paddleOwnerClientId, out int playerIndex))
         {
@@ -388,7 +379,6 @@ public class GameManager : NetworkBehaviour
         }
         else
         {
-
             return;
         }
 
@@ -405,8 +395,6 @@ public class GameManager : NetworkBehaviour
 
     private void ActivatePassiveAbilityForClient(ulong clientId)
     {
-
-
         // Find the client's paddle
         if (spawnedPaddles.TryGetValue(clientId, out GameObject paddleGO))
         {
@@ -416,7 +404,6 @@ public class GameManager : NetworkBehaviour
                 // TODO: Implement specific passive abilities here
                 // For example: increase paddle speed, add shield, etc.
 
-
                 // Example passive effects:
                 // paddleController.ActivateSpeedBoost();
                 // paddleController.ActivateShield();
@@ -425,27 +412,21 @@ public class GameManager : NetworkBehaviour
         }
         else
         {
-
         }
     }
-
-
 
     private void MoveLegendStoneOnServer(ulong playerId, Vector3 safePointPosition)
     {
         if (!IsServer) return;
 
-
         // Get the player index from server's playerIndexMap
         if (!playerIndexMap.TryGetValue(playerId, out int playerIndex))
         {
-
             return;
         }
 
         // Find the legend stone for this player
         LegendStoneController[] allStones = FindObjectsByType<LegendStoneController>(FindObjectsSortMode.None);
-
 
         bool foundMatchingStone = false;
         for (int i = 0; i < allStones.Length; i++)
@@ -453,10 +434,8 @@ public class GameManager : NetworkBehaviour
             var stone = allStones[i];
             ulong stonePlayerId = stone.GetAssociatedPlayerId();
 
-
             if (stonePlayerId == playerId)
             {
-
                 foundMatchingStone = true;
 
                 // Move the stone on server side - NetworkTransform will sync to clients
@@ -471,12 +450,10 @@ public class GameManager : NetworkBehaviour
 
         if (!foundMatchingStone)
         {
-
             // Debug all available stones
             for (int i = 0; i < allStones.Length; i++)
             {
                 var stone = allStones[i];
-
             }
         }
     }
@@ -484,8 +461,6 @@ public class GameManager : NetworkBehaviour
     [ClientRpc]
     private void PlayLegendStoneTransformationEffectsClientRpc(ulong playerId, Vector3 safePointPosition)
     {
-
-
         // Client-side visual/audio effects only
         // TODO: Implement visual effects
         // AudioManager.PlayTransformationSound();
@@ -496,13 +471,10 @@ public class GameManager : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
     public void RequestLegendStoneTransformationServerRpc(ulong clientId, ServerRpcParams rpcParams = default)
     {
-
-
         // Validate that the sender is requesting transformation for their own client or is authorized
         ulong senderClientId = rpcParams.Receive.SenderClientId;
         if (senderClientId != clientId)
         {
-
             return;
         }
 
@@ -517,22 +489,18 @@ public class GameManager : NetworkBehaviour
         {
             originalPlayerHPBarWidth = playerHPBarComponent.sizeDelta.x;
             ConfigureHPBarAnchoring(playerHPBarComponent);
-
         }
         else
         {
-
         }
 
         if (opponentHPBarComponent != null)
         {
             originalOpponentHPBarWidth = opponentHPBarComponent.sizeDelta.x;
             ConfigureHPBarAnchoring(opponentHPBarComponent);
-
         }
         else
         {
-
         }
 
         hpBarsInitialized = true;
@@ -542,7 +510,7 @@ public class GameManager : NetworkBehaviour
     {
         // Set left-aligned anchoring so bar shrinks from right side
         hpBar.anchorMin = new Vector2(0f, 0.5f);  // Left-center anchor
-        hpBar.anchorMax = new Vector2(0f, 0.5f);  // Left-center anchor  
+        hpBar.anchorMax = new Vector2(0f, 0.5f);  // Left-center anchor
         hpBar.pivot = new Vector2(0f, 0.5f);      // Pivot at left-center
 
         // Ensure position is at left edge
@@ -556,7 +524,6 @@ public class GameManager : NetworkBehaviour
         {
             if (Time.frameCount % 120 == 0) // Less frequent logging
             {
-
             }
             return;
         }
@@ -569,7 +536,6 @@ public class GameManager : NetworkBehaviour
         float oldWidth = hpBar.sizeDelta.x;
         if (Mathf.Abs(oldWidth - newWidth) > 1f && Time.frameCount % 30 == 0)
         {
-
         }
 
         // Update size (width only)
@@ -584,35 +550,26 @@ public class GameManager : NetworkBehaviour
     [ContextMenu("Force Show HP Bars")]
     public void ForceShowHPBars()
     {
-
-
         if (playerHPBar != null)
         {
             playerHPBar.gameObject.SetActive(true);
-
         }
         else
         {
-
         }
 
         if (opponentHPBar != null)
         {
             opponentHPBar.gameObject.SetActive(true);
-
         }
         else
         {
-
         }
-
-
     }
 
     private void CreateFallbackManaUI()
     {
         hasTriedCreatingFallbackUI = true;
-
 
         try
         {
@@ -646,11 +603,9 @@ public class GameManager : NetworkBehaviour
             rectTransform.sizeDelta = new Vector2(200, 30);
 
             playerManaText = manaText;
-
         }
         catch (System.Exception e)
         {
-
         }
     }
 
@@ -660,13 +615,11 @@ public class GameManager : NetworkBehaviour
 
         if (NetworkManager.ConnectedClientsList.Count < 2)
         {
-
             return;
         }
 
         ulong hostId = NetworkManager.ServerClientId;
         ulong otherId = NetworkManager.ConnectedClientsIds.FirstOrDefault(id => id != hostId);
-
 
         if (playerScore.Value > opponentScore.Value)
         {
@@ -679,7 +632,6 @@ public class GameManager : NetworkBehaviour
         else
         {
             isSuddenDeath = true;
-
         }
     }
 
@@ -698,10 +650,6 @@ public class GameManager : NetworkBehaviour
         // Remove ball when match ends
         RemoveBall();
 
-
-
-        Debug.Log($"[GameManager] Game ended - Type: {type}, Winner: {winnerId}, Stars: {stars}");
-
         // Call RPC to show end game UI on all clients
         ShowEndGameUIClientRpc(winnerId, stars, 5);
     }
@@ -711,14 +659,11 @@ public class GameManager : NetworkBehaviour
     {
         if (endGameUI == null)
         {
-            Debug.LogError("[GameManager] EndGameUI is not assigned!");
             return;
         }
 
         // Determine if local client is the winner
         bool isWinner = (NetworkManager.Singleton.LocalClientId == winnerId);
-
-        Debug.Log($"[GameManager] Showing end game UI - Winner: {winnerId}, LocalClient: {NetworkManager.Singleton.LocalClientId}, IsWinner: {isWinner}");
 
         // Show the end game UI
         endGameUI.ShowResult(isWinner, starCount, matchDuration);
@@ -726,7 +671,6 @@ public class GameManager : NetworkBehaviour
 
     public void InitializeFromDecks(Dictionary<ulong, DeckPayload> decksByClient)
     {
-
         if (!IsServer) return;
 
         _decksByClient = decksByClient != null
@@ -736,7 +680,6 @@ public class GameManager : NetworkBehaviour
         foreach (var kv in _decksByClient)
         {
             var p = kv.Value;
-
         }
 
         // 1) Assign indices: host=0, first client=1
@@ -750,7 +693,6 @@ public class GameManager : NetworkBehaviour
 
             if (!playerIndexMap.ContainsKey(clientId))
             {
-
                 continue;
             }
 
@@ -760,19 +702,15 @@ public class GameManager : NetworkBehaviour
         // 3) Start if both are ready
         if (playerDecks.Count >= 2)
         {
-
             StartGameWithDecks();
             gameStarted.Value = true;
         }
         else
         {
-
         }
-
     }
 
     // Optional external start (also called via SendMessage from NetworkUI)
-
 
     // Assign consistent indices and notify each client
     private void ServerAssignPlayerIndices()
@@ -783,7 +721,6 @@ public class GameManager : NetworkBehaviour
 
         // Use actually connected clients
         var ids = new List<ulong>(NetworkManager.Singleton.ConnectedClientsIds);
-
 
         ids.Sort((a, b) =>
         {
@@ -804,20 +741,14 @@ public class GameManager : NetworkBehaviour
                 Send = new ClientRpcSendParams { TargetClientIds = new[] { id } }
             });
 
-
             assigned++;
         }
-
-
-
-
     }
 
     [ClientRpc]
     private void SetClientIndexClientRpc(int index, ClientRpcParams clientRpcParams = default)
     {
         IsClientOneInternal = index == 0;
-
     }
 
     private void SyncFloors()
@@ -865,7 +796,6 @@ public class GameManager : NetworkBehaviour
     // Deck registration and spawning
 public void RegisterPlayerDeck(ulong clientId, DeckPayload payload)
     {
-
         playerDecks[clientId] = payload;
 
         // Resolve cards for server-side validation/logic
@@ -877,11 +807,9 @@ public void RegisterPlayerDeck(ulong clientId, DeckPayload payload)
         }
         playerCardDecks[clientId] = resolvedCards;
 
-
         // Spawn paddle + legend
         if (!playerIndexMap.TryGetValue(clientId, out int index))
         {
-
             return;
         }
 
@@ -893,8 +821,6 @@ public void RegisterPlayerDeck(ulong clientId, DeckPayload payload)
         {
             Send = new ClientRpcSendParams { TargetClientIds = new[] { clientId } }
         });
-
-
     }
 
     private void SpawnPaddleForPlayer(ulong clientId, DeckPayload payload)
@@ -902,20 +828,14 @@ public void RegisterPlayerDeck(ulong clientId, DeckPayload payload)
         var stone = DeckRegistry.Instance.GetLegendStoneById(payload.legendStoneId);
         if (stone == null)
         {
-
             return;
         }
         if (stone.AssociatedPaddlePrefab == null)
         {
-
             return;
         }
 
-
         Transform spawnT = (clientId == 1) ? client1SpawnPoint : client2SpawnPoint;
-
-
-
 
         // Instantiate new paddle from the stone's prefab
         var paddleGO = Instantiate(stone.AssociatedPaddlePrefab, spawnT.position, spawnT.rotation);
@@ -929,7 +849,6 @@ public void RegisterPlayerDeck(ulong clientId, DeckPayload payload)
         var netObj = paddleGO.GetComponent<NetworkObject>();
         if (!netObj)
         {
-
             Destroy(paddleGO);
             return;
         }
@@ -948,8 +867,6 @@ public void RegisterPlayerDeck(ulong clientId, DeckPayload payload)
         // Also update clients with the new paddle reference
         NetworkObjectReference paddleRef = netObj;
         UpdateLegendStonePaddleReferenceClientRpc(stone.stoneName, paddleRef);
-
-
     }
 
     private void SpawnLegendStoneForPaddle(ulong clientId, LegendStoneData stoneData, GameObject paddleGO)
@@ -959,14 +876,10 @@ public void RegisterPlayerDeck(ulong clientId, DeckPayload payload)
             return;
         }
 
-
         Transform stoneSpawnPoint = (clientId == 1) ? client1LegendStoneSpawnPoint : client2LegendStoneSpawnPoint;
-
 
         Vector3 stonePosition = stoneSpawnPoint.position;
         Quaternion stoneRotation = stoneSpawnPoint.rotation;
-
-
 
         // Instantiate legend stone from the stone data's prefab at the predefined spawn point
         var stoneGO = Instantiate(stoneData.legendStoneVisualPrefab, stonePosition, stoneRotation);
@@ -974,7 +887,6 @@ public void RegisterPlayerDeck(ulong clientId, DeckPayload payload)
         var netObj = stoneGO.GetComponent<NetworkObject>();
         if (!netObj)
         {
-
             Destroy(stoneGO);
             return;
         }
@@ -987,11 +899,9 @@ public void RegisterPlayerDeck(ulong clientId, DeckPayload payload)
         {
             var paddleController = paddleGO.GetComponent<PaddleController>();
             stoneController.Initialize(paddleController, clientId);
-
         }
         else
         {
-
             if (netObj.IsSpawned) netObj.Despawn();
             else Destroy(stoneGO);
         }
@@ -1011,7 +921,6 @@ public void RegisterPlayerDeck(ulong clientId, DeckPayload payload)
                 // Update the stone's paddle reference to the spawned instance
                 legendStone.associatedPaddlePrefab = spawnedPaddle;
 
-
                 // If the stone already has a spirit beam, reinitialize it with the new paddle
                 var spiritBeam = legendStone.GetComponentInChildren<SpiritBeamController>();
                 if (spiritBeam != null)
@@ -1019,7 +928,6 @@ public void RegisterPlayerDeck(ulong clientId, DeckPayload payload)
                     // Create a temporary BeamSettings if needed
                     BeamSettings settings = legendStone.customBeamSettings ?? new BeamSettings();
                     spiritBeam.Initialize(legendStone.transform, spawnedPaddle.transform, settings);
-
                 }
 
                 break; // Found the matching stone, no need to continue
@@ -1047,7 +955,6 @@ public void RegisterPlayerDeck(ulong clientId, DeckPayload payload)
                     // Update the stone's paddle reference to the spawned instance
                     legendStone.associatedPaddlePrefab = spawnedPaddle;
 
-
                     // If the stone already has a spirit beam, reinitialize it with the new paddle
                     var spiritBeam = legendStone.GetComponentInChildren<SpiritBeamController>();
                     if (spiritBeam != null)
@@ -1055,7 +962,6 @@ public void RegisterPlayerDeck(ulong clientId, DeckPayload payload)
                         // Create a temporary BeamSettings if needed
                         BeamSettings settings = legendStone.customBeamSettings ?? new BeamSettings();
                         spiritBeam.Initialize(legendStone.transform, spawnedPaddle.transform, settings);
-
                     }
 
                     break; // Found the matching stone, no need to continue
@@ -1064,7 +970,6 @@ public void RegisterPlayerDeck(ulong clientId, DeckPayload payload)
         }
         else
         {
-
         }
     }
 
@@ -1073,7 +978,6 @@ public void RegisterPlayerDeck(ulong clientId, DeckPayload payload)
         // Get assigned player index from playerIndexMap
         if (!playerIndexMap.TryGetValue(clientId, out int playerIndex))
         {
-
             return;
         }
 
@@ -1090,14 +994,11 @@ public void RegisterPlayerDeck(ulong clientId, DeckPayload payload)
             return;
         }
 
-
         var legendData = DeckRegistry.Instance.GetCastingLegendById(payload.castingLegendId);
         if (legendData == null || legendData.legendAvatarPrefab == null)
         {
-
             return;
         }
-
 
         GameObject legend = Instantiate(legendData.legendAvatarPrefab, spawn.position, spawn.rotation);
         var netObj = legend.GetComponent<NetworkObject>();
@@ -1105,11 +1006,9 @@ public void RegisterPlayerDeck(ulong clientId, DeckPayload payload)
         {
             netObj.SpawnWithOwnership(clientId);
             spawnedLegends[clientId] = legend;
-
         }
         else
         {
-
             Destroy(legend);
         }
     }
@@ -1117,7 +1016,6 @@ public void RegisterPlayerDeck(ulong clientId, DeckPayload payload)
     private void StartGameWithDecks()
     {
         if (!IsServer) return;
-
 
         // Reset score/time
         playerScore.Value = 0;
@@ -1136,38 +1034,30 @@ public void RegisterPlayerDeck(ulong clientId, DeckPayload payload)
 
         if (gameStartAnimationController != null)
         {
-
             gameStartAnimationController.OnAnimationComplete += OnGameStartAnimationComplete;
             gameStartAnimationController.StartGameAnimation();
         }
         else
         {
-
             gameStarted.Value = true;
             gameTimerStarted = true; // Also start timer immediately if no animation
             SpawnBall();
         }
-
     }
 
     private void OnGameStartAnimationComplete()
     {
-
-
         if (!IsServer)
         {
-
             return;
         }
 
         if (animationCompleted)
         {
-
             return;
         }
 
         animationCompleted = true;
-
 
         // Legend stones are now spawned directly with paddles, no separate initialization needed
 
@@ -1181,36 +1071,28 @@ public void RegisterPlayerDeck(ulong clientId, DeckPayload payload)
         gameStarted.Value = true;
         gameTimerStarted = true;
 
-
         SpawnBall();
-
     }
 
     private void SpawnBall()
     {
-
-
         if (!IsServer)
         {
-
             return;
         }
 
         if (NetworkManager.Singleton == null)
         {
-
             return;
         }
 
         if (!NetworkManager.Singleton.IsListening)
         {
-
             return;
         }
 
         if (ballPrefab == null)
         {
-
             return;
         }
 
@@ -1218,23 +1100,18 @@ public void RegisterPlayerDeck(ulong clientId, DeckPayload payload)
         var ballNetObj = ballPrefab.GetComponent<NetworkObject>();
         if (ballNetObj == null)
         {
-
             return;
         }
 
         if (ballSpawnPoint == null)
         {
-
             return;
         }
-
-
 
         // Check if there's already a ball in the scene
         var existingBall = FindFirstObjectByType<BallController>();
         if (existingBall != null)
         {
-
             var oldNetObj = existingBall.GetComponent<NetworkObject>();
             if (oldNetObj != null && oldNetObj.IsSpawned)
             {
@@ -1248,28 +1125,22 @@ public void RegisterPlayerDeck(ulong clientId, DeckPayload payload)
 
         try
         {
-
             var ball = Instantiate(ballPrefab, ballSpawnPoint.position, ballSpawnPoint.rotation);
-
 
             var netObj = ball.GetComponent<NetworkObject>();
 
             if (netObj != null)
             {
-
                 netObj.Spawn();
                 ball.GetComponent<BallController>().LaunchBall();
-
             }
             else
             {
-
                 Destroy(ball);
             }
         }
         catch (System.Exception e)
         {
-
         }
     }
 
@@ -1283,7 +1154,6 @@ public void RegisterPlayerDeck(ulong clientId, DeckPayload payload)
             var netObj = ball.GetComponent<NetworkObject>();
             if (netObj != null && netObj.IsSpawned)
             {
-
                 netObj.Despawn();
             }
         }
@@ -1298,37 +1168,30 @@ public void RegisterPlayerDeck(ulong clientId, DeckPayload payload)
         {
             if (ballPrefab == null)
             {
-
                 return;
             }
 
             var ball = Instantiate(ballPrefab, ballSpawnPoint.position, ballSpawnPoint.rotation);
 
-
             var netObj = ball.GetComponent<NetworkObject>();
 
             if (netObj != null)
             {
-
                 netObj.Spawn();
-
 
                 // Update BallController.Instance to the new ball
                 BallController ballController = ball.GetComponent<BallController>();
                 if (ballController != null)
                 {
-
                 }
             }
             else
             {
-
                 Destroy(ball);
             }
         }
         catch (System.Exception e)
         {
-
         }
     }
 
@@ -1362,13 +1225,9 @@ public void RegisterPlayerDeck(ulong clientId, DeckPayload payload)
         SpawnBall();
     }
 
-
-
     [ClientRpc]
     private void SendDeckToClientClientRpc(DeckPayload payload, ClientRpcParams clientRpcParams = default)
     {
-
-
         if (DeckManager.Instance != null)
         {
             var reconstructedDeck = ScriptableObject.CreateInstance<PlayerDeckData>();
@@ -1382,22 +1241,18 @@ public void RegisterPlayerDeck(ulong clientId, DeckPayload payload)
 
             DeckManager.Instance.LoadDeck(reconstructedDeck);
 
-
             // Initialize CardManager UI after loading the deck
             var cardManager = FindFirstObjectByType<CardManager>();
             if (cardManager != null)
             {
-
                 cardManager.StartCardUIInitialization();
             }
             else
             {
-
             }
         }
         else
         {
-
         }
     }
 
@@ -1407,27 +1262,23 @@ public void RegisterPlayerDeck(ulong clientId, DeckPayload payload)
         // Find the player's paddle
         if (!spawnedPaddles.TryGetValue(playerId, out GameObject paddleGO))
         {
-
             return false;
         }
 
         PaddleController paddle = paddleGO.GetComponent<PaddleController>();
         if (paddle == null)
         {
-
             return false;
         }
 
         // Check if player has enough mana
         if (paddle.currentMana.Value < manaCost)
         {
-
             return false;
         }
 
         // Consume the mana
         paddle.currentMana.Value -= manaCost;
-
 
         // Send mana update only to the player's client
         OnManaGeneratedClientRpc(playerId, paddle.currentMana.Value, new ClientRpcParams
@@ -1442,7 +1293,6 @@ public void RegisterPlayerDeck(ulong clientId, DeckPayload payload)
     [ServerRpc(RequireOwnership = false)]
     public void ApplyCardEffectServerRpc(string cardName, ulong playerId, Vector3 position = default, Vector3 direction = default)
     {
-
         if (playerCardDecks.TryGetValue(playerId, out var cards))
         {
             var cardData = cards.Find(c => c.cardName == cardName);
@@ -1451,7 +1301,6 @@ public void RegisterPlayerDeck(ulong clientId, DeckPayload payload)
                 // Check if player has enough mana
                 if (!TryConsumeMana(playerId, cardData.manaCost))
                 {
-
                     return; // Not enough mana, don't play the card
                 }
 
@@ -1460,7 +1309,6 @@ public void RegisterPlayerDeck(ulong clientId, DeckPayload payload)
                 if (playerDecks.TryGetValue(playerId, out var deckPayload))
                 {
                     cardLevel = deckPayload.GetCardLevel(cardName);
-                    Debug.Log($"[GameManager] Playing card '{cardName}' at level {cardLevel}");
                 }
 
                 // Apply the card effect (handles spawning and animation internally)
@@ -1480,23 +1328,19 @@ public void RegisterPlayerDeck(ulong clientId, DeckPayload payload)
             }
             else
             {
-
             }
         }
         else
         {
-
         }
     }
 
     [ClientRpc]
     private void PlayCardEffectClientRpc(string cardName, ulong playerId, Vector3 position = default, Vector3 direction = default)
     {
-
         var cardData = DeckRegistry.Instance.GetCardByName(cardName);
         if (cardData == null || cardData.effect == null)
         {
-
             return;
         }
 
@@ -1517,7 +1361,6 @@ public void RegisterPlayerDeck(ulong clientId, DeckPayload payload)
         }
         if (legendToAnimate != null)
             TriggerLegendCast(legendToAnimate);
-
     }
 
     private void TriggerLegendCast(GameObject legend)
@@ -1530,7 +1373,6 @@ public void RegisterPlayerDeck(ulong clientId, DeckPayload payload)
     // Defeat triggers
     public void TriggerLegendStoneDefeat(ulong loserId)
     {
-
         if (!IsServer)
         {
             return;
@@ -1540,7 +1382,6 @@ public void RegisterPlayerDeck(ulong clientId, DeckPayload payload)
         if (matchEnded)
         {
         }
-
 
         var connectedClients = NetworkManager.Singleton.ConnectedClientsIds;
 
@@ -1566,7 +1407,6 @@ public void RegisterPlayerDeck(ulong clientId, DeckPayload payload)
         ulong sender = rpcParams.Receive.SenderClientId;
         if (readyClients.Add(sender))
         {
-
         }
 
         // Start match when both players are ready and decks are present
@@ -1578,8 +1418,6 @@ public void RegisterPlayerDeck(ulong clientId, DeckPayload payload)
         }
 else
         {
-
         }
-
     }
 }

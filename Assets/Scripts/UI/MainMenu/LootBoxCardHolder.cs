@@ -30,7 +30,6 @@ public class LootBoxCardHolder : MonoBehaviour
     {
         if (data == null)
         {
-            Debug.LogError("[LootBoxCardHolder] CardData is null!");
             return;
         }
 
@@ -63,14 +62,11 @@ public class LootBoxCardHolder : MonoBehaviour
         {
             amountText.text = amount > 1 ? $"x{amount}" : "";
         }
-
-        Debug.Log($"[LootBoxCardHolder] Setup card: {data.cardName} (Rarity: {data.rarity})");
     }
     public void SetupGuardian(CastingLegendData data, int amount = 1)
     {
         if (data == null)
         {
-            Debug.LogError("[LootBoxCardHolder] CardData is null!");
             return;
         }
 
@@ -92,20 +88,16 @@ public class LootBoxCardHolder : MonoBehaviour
             }
         }
 
-
-
         // Display amount
         if (amountText != null)
         {
             amountText.text = amount > 1 ? $"x{amount}" : "";
         }
-
     }
     public void SetupLegendStone(LegendStoneData data, int amount = 1)
     {
         if (data == null)
         {
-            Debug.LogError("[LootBoxCardHolder] CardData is null!");
             return;
         }
 
@@ -127,14 +119,11 @@ public class LootBoxCardHolder : MonoBehaviour
             }
         }
 
-
-
         // Display amount
         if (amountText != null)
         {
             amountText.text = amount > 1 ? $"x{amount}" : "";
         }
-
     }
 
     /// <summary>

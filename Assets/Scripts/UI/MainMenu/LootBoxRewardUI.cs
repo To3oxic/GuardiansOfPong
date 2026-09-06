@@ -84,7 +84,6 @@ public class LootBoxRewardUI : MonoBehaviour
     {
         if (items == null || items.Count == 0)
         {
-            Debug.LogWarning("[LootBoxRewardUI] No items to show!");
             return;
         }
 
@@ -235,7 +234,6 @@ public class LootBoxRewardUI : MonoBehaviour
         }
         else
         {
-            Debug.LogError($"[LootBoxRewardUI] Unknown reward type: {rewardInfo.item.GetType()}");
         }
     }
 
@@ -246,7 +244,6 @@ public class LootBoxRewardUI : MonoBehaviour
     {
         if (cardHolderPrefab == null || cardHolderContainer == null)
         {
-            Debug.LogError("[LootBoxRewardUI] Card holder prefab or container not assigned!");
             return;
         }
 
@@ -260,7 +257,6 @@ public class LootBoxRewardUI : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("[LootBoxRewardUI] Card holder prefab doesn't have LootBoxCardHolder component!");
         }
     }
 
@@ -271,7 +267,6 @@ public class LootBoxRewardUI : MonoBehaviour
     {
         if (cardHolderContainer == null || cardHolderContainer == null)
         {
-            Debug.LogError("[LootBoxRewardUI] Legend holder prefab or container not assigned!");
             return;
         }
 
@@ -285,7 +280,6 @@ public class LootBoxRewardUI : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("[LootBoxRewardUI] Legend holder prefab doesn't have LootBoxLegendHolder component!");
         }
     }
 
@@ -296,7 +290,6 @@ public class LootBoxRewardUI : MonoBehaviour
     {
         if (cardHolderPrefab == null || cardHolderContainer == null)
         {
-            Debug.LogError("[LootBoxRewardUI] LegendStone holder prefab or container not assigned!");
             return;
         }
 
@@ -310,7 +303,6 @@ public class LootBoxRewardUI : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("[LootBoxRewardUI] LegendStone holder prefab doesn't have LootBoxLegendStoneHolder component!");
         }
     }
 
@@ -341,8 +333,6 @@ public class LootBoxRewardUI : MonoBehaviour
     /// </summary>
     private void CloseRewardUI()
     {
-        Debug.Log("[LootBoxRewardUI] Closing reward UI");
-
         if (rewardCanvas != null)
         {
             rewardCanvas.gameObject.SetActive(false);

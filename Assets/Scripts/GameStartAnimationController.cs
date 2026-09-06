@@ -69,7 +69,6 @@ public class GameStartAnimationController : NetworkBehaviour
         if (animationInProgress) return;
         if (!IsServer) return; // Only server controls the animation timing
 
-        Debug.Log("[GameStartAnimation] Starting game intro animation sequence");
         animationInProgress = true;
 
         // Trigger animation on all clients (including server)
@@ -89,11 +88,8 @@ public class GameStartAnimationController : NetworkBehaviour
             countdownDelay + countdownDuration
         );
 
-        Debug.Log($"[GameStartAnimation] Server waiting {totalDuration} seconds for animation completion");
-
         yield return new WaitForSeconds(totalDuration);
 
-        Debug.Log("[GameStartAnimation] Server animation timer complete - triggering completion");
         animationInProgress = false;
         OnAnimationComplete?.Invoke();
     }
@@ -106,11 +102,8 @@ public class GameStartAnimationController : NetworkBehaviour
 
     private IEnumerator PlayAnimationSequence()
     {
-        Debug.Log("[GameStartAnimation] Beginning animation sequence");
-
         // Setup initial positions
         SetupInitialPositions();
-
 
         // 2. Legend stones rise from underground (delayed)
         yield return new WaitForSeconds(stoneRiseDelay);
@@ -125,7 +118,6 @@ public class GameStartAnimationController : NetworkBehaviour
         yield return StartCoroutine(PlayCountdown());
 
         // 5. Client animation sequence complete
-        Debug.Log("[GameStartAnimation] Client animation sequence complete");
         // Note: Server handles the OnAnimationComplete callback via ServerAnimationTimer
     }
 
@@ -166,21 +158,9 @@ public class GameStartAnimationController : NetworkBehaviour
             Vector3 finalPosition = isClient1 ? client1FinalPosition : client2FinalPosition;
             Vector3 finalRotation = isClient1 ? client1FinalRotation : client2FinalRotation;
 
-            Debug.Log($"[GameStartAnimation] === CAMERA SETUP ===");
-            Debug.Log($"[GameStartAnimation] NetworkManager LocalClientId: {localClientId}");
-            Debug.Log($"[GameStartAnimation] GameManager.IsClientOne: {isClient1}");
-            Debug.Log($"[GameStartAnimation] Setting up camera for Client {(isClient1 ? 1 : 2)}");
-            Debug.Log($"[GameStartAnimation] Client1 Position: {client1FinalPosition} | Client1 Rotation: {client1FinalRotation}");
-            Debug.Log($"[GameStartAnimation] Client2 Position: {client2FinalPosition} | Client2 Rotation: {client2FinalRotation}");
-            Debug.Log($"[GameStartAnimation] isClient1 boolean evaluation: {isClient1}");
-            Debug.Log($"[GameStartAnimation] Position selection: isClient1={isClient1} ? client1={client1FinalPosition} : client2={client2FinalPosition} = {finalPosition}");
-            Debug.Log($"[GameStartAnimation] Rotation selection: isClient1={isClient1} ? client1={client1FinalRotation} : client2={client2FinalRotation} = {finalRotation}");
-
             gameCamera.orthographicSize = finalCameraSize;
             gameCamera.transform.position = finalPosition;
             gameCamera.transform.rotation = Quaternion.Euler(finalRotation);
-
-            Debug.Log($"[GameStartAnimation] Camera applied - Position: {gameCamera.transform.position} | Rotation: {gameCamera.transform.rotation.eulerAngles}");
         }
 
         // Set legend stones to underground positions
@@ -203,30 +183,19 @@ public class GameStartAnimationController : NetworkBehaviour
                 paddles[i].transform.position = groundPos;
             }
         }
-
-        Debug.Log($"[GameStartAnimation] Setup complete - Stones: {legendStones.Length}, Paddles: {paddles.Length}");
     }
 
     private IEnumerator AnimateCamera()
     {
         if (gameCamera == null)
         {
-            Debug.LogWarning("[GameStartAnimation] Camera animation skipped - no camera assigned");
             yield break;
         }
-
-        Debug.Log("[GameStartAnimation] Starting camera animation");
 
         // Determine which client this is and set appropriate final rotation
         bool isClient1 = GameManager.IsClientOne;
         ulong localClientId = Unity.Netcode.NetworkManager.Singleton.LocalClientId;
         Vector3 finalRotation = isClient1 ? client1FinalRotation : client2FinalRotation;
-
-        Debug.Log($"[GameStartAnimation] === CLIENT DETECTION ===");
-        Debug.Log($"[GameStartAnimation] NetworkManager LocalClientId: {localClientId}");
-        Debug.Log($"[GameStartAnimation] GameManager.IsClientOne: {isClient1}");
-        Debug.Log($"[GameStartAnimation] This is Client {(isClient1 ? 1 : 2)}");
-        Debug.Log($"[GameStartAnimation] Final rotation will be: {finalRotation}");
 
         float elapsedTime = 0f;
         float startSize = startCameraSize;
@@ -252,14 +221,10 @@ public class GameStartAnimationController : NetworkBehaviour
         // Ensure final values are set
         gameCamera.orthographicSize = endSize;
         gameCamera.transform.rotation = endRot;
-
-        Debug.Log($"[GameStartAnimation] Camera animation complete - Final size: {endSize}, Final rotation: {finalRotation}");
     }
 
     private IEnumerator AnimateLegendStones()
     {
-        Debug.Log("[GameStartAnimation] Starting legend stone rise animation");
-
         // Play rising sound effect
         if (ambientAudioSource != null && stoneRisingSound != null)
         {
@@ -314,14 +279,10 @@ public class GameStartAnimationController : NetworkBehaviour
                 legendStones[i].transform.position = endPositions[i];
             }
         }
-
-        Debug.Log("[GameStartAnimation] Legend stones animation complete");
     }
 
     private IEnumerator AnimatePaddles()
     {
-        Debug.Log("[GameStartAnimation] Starting paddle levitation animation");
-
         // Play levitation sound effect
         if (ambientAudioSource != null && paddleLevitationSound != null)
         {
@@ -367,14 +328,10 @@ public class GameStartAnimationController : NetworkBehaviour
                 paddles[i].transform.position = endPositions[i];
             }
         }
-
-        Debug.Log("[GameStartAnimation] Paddle levitation complete");
     }
 
     private IEnumerator PlayCountdown()
     {
-        Debug.Log("[GameStartAnimation] Starting countdown");
-
         if (countdownText != null)
         {
             countdownText.gameObject.SetActive(true);
@@ -425,8 +382,6 @@ public class GameStartAnimationController : NetworkBehaviour
         {
             countdownText.gameObject.SetActive(false);
         }
-
-        Debug.Log("[GameStartAnimation] Countdown complete");
     }
 
     private IEnumerator AnimateCountdownNumber()

@@ -38,21 +38,17 @@ public class BackgroundMusicManager : MonoBehaviour
         if (audioSource == null)
         {
             audioSource = gameObject.AddComponent<AudioSource>();
-            Debug.Log("[BackgroundMusicManager] Created new AudioSource component");
         }
 
         // Configure audio source
         audioSource.volume = volume;
         audioSource.playOnAwake = false;
-
-        Debug.Log("[BackgroundMusicManager] AudioSource initialized");
     }
 
     private void PlayBackgroundMusic()
     {
         if (introMusicClip == null)
         {
-            Debug.LogWarning("[BackgroundMusicManager] Intro music clip is not assigned!");
             return;
         }
 
@@ -61,7 +57,6 @@ public class BackgroundMusicManager : MonoBehaviour
         audioSource.loop = false;
         audioSource.Play();
         isPlayingIntro = true;
-        Debug.Log("[BackgroundMusicManager] Intro music started playing");
     }
 
     private void Update()
@@ -79,7 +74,6 @@ public class BackgroundMusicManager : MonoBehaviour
         audioSource.loop = true;
         audioSource.Play();
         isPlayingIntro = false;
-        Debug.Log("[BackgroundMusicManager] Loop music started playing");
     }
 
     /// <summary>
@@ -90,7 +84,6 @@ public class BackgroundMusicManager : MonoBehaviour
         if (audioSource != null && audioSource.isPlaying)
         {
             audioSource.Stop();
-            Debug.Log("[BackgroundMusicManager] Background music stopped");
         }
     }
 
@@ -102,7 +95,6 @@ public class BackgroundMusicManager : MonoBehaviour
         if (audioSource != null && audioSource.isPlaying)
         {
             audioSource.Pause();
-            Debug.Log("[BackgroundMusicManager] Background music paused");
         }
     }
 
@@ -114,7 +106,6 @@ public class BackgroundMusicManager : MonoBehaviour
         if (audioSource != null && !audioSource.isPlaying)
         {
             audioSource.Play();
-            Debug.Log("[BackgroundMusicManager] Background music resumed");
         }
     }
 
@@ -127,7 +118,6 @@ public class BackgroundMusicManager : MonoBehaviour
         {
             audioSource.volume = Mathf.Clamp01(newVolume);
             volume = audioSource.volume;
-            Debug.Log($"[BackgroundMusicManager] Volume set to {audioSource.volume}");
         }
     }
 }

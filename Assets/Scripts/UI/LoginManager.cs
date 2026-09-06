@@ -24,71 +24,50 @@ public class LoginManager : MonoBehaviour
 
     private void Awake()
     {
-        Debug.Log("[LoginManager] Awake() called");
-
         // Try to get PlayFabBackendManager (handle timing issues)
         backendManager = PlayFabBackendManager.Instance;
-        Debug.Log($"[LoginManager] PlayFabBackendManager.Instance = {(backendManager != null ? "FOUND" : "NULL")}");
 
         if (backendManager == null)
         {
-            Debug.Log("[LoginManager] Trying FindAnyObjectByType...");
             // Fallback: Search in scene if singleton not ready yet
             backendManager = FindAnyObjectByType<PlayFabBackendManager>();
-            Debug.Log($"[LoginManager] FindAnyObjectByType result = {(backendManager != null ? "FOUND" : "NULL")}");
 
             if (backendManager == null)
             {
-                Debug.LogError("[LoginManager] PlayFabBackendManager not found! Add it to the scene.");
                 return;
             }
         }
-
-        Debug.Log("[LoginManager] Found PlayFabBackendManager in scene");
     }
 
     private void Start()
     {
-        Debug.Log("[LoginManager] Start() called");
-
         // Verify backend manager is available
         if (backendManager == null)
         {
-            Debug.LogError("[LoginManager] PlayFabBackendManager still null in Start()! Scene setup issue.");
             gameObject.SetActive(false);
             return;
         }
-
-        Debug.Log($"[LoginManager] loginPanel={loginPanel != null}, mainMenuPanel={mainMenuPanel != null}");
 
         // Show login panel
         if (loginPanel != null) loginPanel.SetActive(true);
         if (mainMenuPanel != null) mainMenuPanel.SetActive(false);
 
-        Debug.Log("[LoginManager] Panels activated");
-
         // Hook button events
         if (loginButton != null)
         {
-            Debug.Log("[LoginManager] Hooking loginButton");
             loginButton.onClick.AddListener(OnLoginPressed);
         }
         else
-            Debug.LogWarning("[LoginManager] loginButton is NULL!");
 
         if (registerButton != null)
         {
-            Debug.Log("[LoginManager] Hooking registerButton");
             registerButton.onClick.AddListener(OnRegisterPressed);
         }
         else
-            Debug.LogWarning("[LoginManager] registerButton is NULL!");
 
         // Hook backend events
         backendManager.OnLoginSuccess += OnLoginSuccess;
         backendManager.OnLoginError += OnLoginError;
-
-        Debug.Log("[LoginManager] Login UI ready");
     }
 
     private void OnLoginPressed()
@@ -132,7 +111,6 @@ public class LoginManager : MonoBehaviour
     private void OnLoginSuccess()
     {
         ShowStatus("Login successful!", Color.green);
-        Debug.Log($"[LoginManager] Logged in as {backendManager.GetPlayerData().DisplayName}");
 
         // Hide login, show main menu
         if (loginPanel != null) loginPanel.SetActive(false);
@@ -140,7 +118,6 @@ public class LoginManager : MonoBehaviour
 
         // Load player data
         LoadPlayerData();
-
     }
 
     private void OnLoginError(string error)
@@ -157,23 +134,18 @@ public class LoginManager : MonoBehaviour
         {
             if (collection != null)
             {
-                Debug.Log($"[LoginManager] Loaded {collection.cards.Count} cards");
                 foreach (var card in collection.cards)
                 {
-                    Debug.Log($"[LoginManager] Card:{card} ");
-                    Debug.Log($"  - {card.cardName} (Lv.{card.level}, Qty: {card.quantity})");
                 }
             }
             else
             {
-                Debug.LogWarning("[LoginManager] Failed to load card collection");
             }
         });
 
         // Load player's decks
         backendManager.LoadAllDecks((decks) =>
         {
-            Debug.Log($"[LoginManager] Loaded {decks.Count} decks");
         });
     }
 
@@ -184,7 +156,6 @@ public class LoginManager : MonoBehaviour
             statusText.text = message;
             statusText.color = color;
         }
-        Debug.Log($"[LoginManager] {message}");
     }
 
     private void OnDestroy()

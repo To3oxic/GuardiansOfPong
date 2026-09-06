@@ -30,12 +30,9 @@ public class CardHolderUI : MonoBehaviour
     {
         currentCardData = data; // Store the current card data
 
-        Debug.Log($"[CardHolderUI] Setup called for card: {data?.cardName ?? "NULL"}");
-
         if (data == null)
         {
             // Clear the card
-            Debug.Log("[CardHolderUI] Clearing card");
             rarityBackground.sprite = commonBG;
             cardImage.sprite = null;
             cardImage.color = new Color(0, 0, 0, 0); // Make transparent
@@ -71,14 +68,12 @@ public class CardHolderUI : MonoBehaviour
         }
 
         // Initialize the drag handler with the card data
-        Debug.Log($"[CardHolderUI] Initializing drag handler for {data.cardName}, dragHandler: {dragHandler != null}, RequiresPlacement: {data.effect?.RequiresPlacement() ?? false}");
         if (dragHandler != null)
         {
             dragHandler.Initialize(data);
         }
         else
         {
-            Debug.LogError("[CardHolderUI] DragHandler is NULL!");
         }
     }
 
@@ -89,15 +84,12 @@ public class CardHolderUI : MonoBehaviour
     {
         if (legendData == null)
         {
-            Debug.Log("[CardHolderUI] Clearing legend card");
             cardImage.sprite = null;
             cardImage.color = new Color(0, 0, 0, 0);
             if (manaCostText != null)
                 manaCostText.gameObject.SetActive(false);
             return;
         }
-
-        Debug.Log($"[CardHolderUI] Setup legend: {legendData.legendName}");
 
         // Set rarity background (legendaries are usually epic/legendary)
         rarityBackground.sprite = epicBG;
@@ -120,15 +112,12 @@ public class CardHolderUI : MonoBehaviour
     {
         if (stoneData == null)
         {
-            Debug.Log("[CardHolderUI] Clearing legend stone card");
             cardImage.sprite = null;
             cardImage.color = new Color(0, 0, 0, 0);
             if (manaCostText != null)
                 manaCostText.gameObject.SetActive(false);
             return;
         }
-
-        Debug.Log($"[CardHolderUI] Setup legend stone: {stoneData.stoneName}");
 
         // Set rarity background (stones are usually legendary)
         rarityBackground.sprite = epicBG;

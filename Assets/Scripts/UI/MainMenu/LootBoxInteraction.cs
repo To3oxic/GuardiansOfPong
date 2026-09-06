@@ -117,8 +117,6 @@ public class LootBoxInteraction : MonoBehaviour
 
         // Update level text
         UpdateLootBoxLevelText();
-
-        Debug.Log("[LootBoxInteraction] Loot box interaction initialized");
     }
 
     private void Update()
@@ -128,8 +126,6 @@ public class LootBoxInteraction : MonoBehaviour
         {
             HandleLootBoxClick();
         }
-        Debug.Log("[LootBoxInteraction] Update - maincamera position: " + mainCamera.transform.position);
-
     }
 
     private void HandleLootBoxClick()
@@ -141,7 +137,6 @@ public class LootBoxInteraction : MonoBehaviour
         {
             if (hit.collider.gameObject == lootBoxGameObject)
             {
-                Debug.Log("[LootBoxInteraction] Loot box clicked!");
                 ShowLootBoxView();
             }
         }
@@ -161,7 +156,6 @@ public class LootBoxInteraction : MonoBehaviour
         if (menuCubeRotator != null)
         {
             menuCubeRotator.enabled = false;
-            Debug.Log("[LootBoxInteraction] Disabled cube rotation");
         }
 
         // Show UI
@@ -172,15 +166,12 @@ public class LootBoxInteraction : MonoBehaviour
 
         // Animate camera to loot box view
         StartCoroutine(AnimateCameraToLootBox());
-        Debug.Log("[LootBoxInteraction] maincamera position: " + mainCamera.transform.position);
     }
 
     private IEnumerator AnimateCameraToLootBox()
     {
         float elapsedTime = 0f;
         float duration = 1f / cameraMoveSpeed; // Duration based on speed
-
-        Debug.Log($"[LootBoxInteraction] Starting camera animation from {mainCamera.transform.position} to {lootBoxCameraPos}");
 
         while (elapsedTime < duration)
         {
@@ -204,23 +195,17 @@ public class LootBoxInteraction : MonoBehaviour
         frozenCameraRot = mainCamera.transform.rotation;
         frozenCameraSize = mainCamera.orthographicSize;
         freezeCameraPosition = true;
-
-        Debug.Log($"[LootBoxInteraction] Camera animation complete. Final position: {mainCamera.transform.position}, Frozen position stored: {frozenCameraPos}");
     }
 
     private void OnOpenLootBoxClicked()
     {
-        Debug.Log("[LootBoxInteraction] Open Loot Box clicked - level " + currentLootBoxLevel);
-
         if (PlayFabBackendManager.Instance == null)
         {
-            Debug.LogError("[LootBoxInteraction] PlayFabBackendManager not found!");
             return;
         }
 
         if (!PlayFabBackendManager.Instance.IsLoggedIn())
         {
-            Debug.LogError("[LootBoxInteraction] Not logged in!");
             return;
         }
 
@@ -233,18 +218,14 @@ public class LootBoxInteraction : MonoBehaviour
             },
             error =>
             {
-                Debug.LogError($"[LootBoxInteraction] OpenLootBox failed: {error}");
             }
         );
     }
 
     private void OnLootBoxOpenSuccess(object result)
     {
-        Debug.Log("[LootBoxInteraction] ===== LOOT BOX OPENED SUCCESSFULLY =====");
-
         // Convert result to JSON string
         string resultJson = result.ToString();
-        Debug.Log("[LootBoxInteraction] Result JSON: " + resultJson);
 
         // Parse the JSON string
         LootBoxResponse response = null;
@@ -254,13 +235,11 @@ public class LootBoxInteraction : MonoBehaviour
         }
         catch (System.Exception e)
         {
-            Debug.LogError($"[LootBoxInteraction] Failed to parse loot box response: {e.Message}");
             return;
         }
 
         if (response == null || !response.success)
         {
-            Debug.LogError("[LootBoxInteraction] Loot box response failed!");
             return;
         }
 
@@ -283,20 +262,16 @@ public class LootBoxInteraction : MonoBehaviour
 
                     if (rewardItem is CardData cardData)
                     {
-                        Debug.Log($"[LootBoxInteraction] Found card: {cardData.cardName} [ID: {cardReward.cardId}] (x{cardReward.copies})");
                     }
                     else if (rewardItem is CastingLegendData)
                     {
-                        Debug.Log($"[LootBoxInteraction] Found legend [ID: {cardReward.cardId}] (x{cardReward.copies})");
                     }
                     else if (rewardItem is LegendStoneData)
                     {
-                        Debug.Log($"[LootBoxInteraction] Found legend stone [ID: {cardReward.cardId}] (x{cardReward.copies})");
                     }
                 }
                 else
                 {
-                    Debug.LogWarning($"[LootBoxInteraction] Reward item not found in registry with ID: {cardReward.cardId}");
                 }
             }
         }
@@ -308,10 +283,7 @@ public class LootBoxInteraction : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("[LootBoxInteraction] Reward UI not assigned!");
         }
-
-        Debug.Log($"[LootBoxInteraction] Showing {awardedItems.Count} items in reward UI");
     }
 
     private void OnLeaveLootBoxClicked()
@@ -319,7 +291,6 @@ public class LootBoxInteraction : MonoBehaviour
         if (!isLootBoxViewActive)
             return;
 
-        Debug.Log("[LootBoxInteraction] Leave Loot Box clicked");
         isLootBoxViewActive = false;
         freezeCameraPosition = false;
 
@@ -327,7 +298,6 @@ public class LootBoxInteraction : MonoBehaviour
         if (menuCubeRotator != null)
         {
             menuCubeRotator.enabled = true;
-            Debug.Log("[LootBoxInteraction] Enabled cube rotation");
         }
 
         // Hide UI
@@ -361,8 +331,6 @@ public class LootBoxInteraction : MonoBehaviour
         mainCamera.transform.position = originalCameraPos;
         mainCamera.transform.rotation = originalCameraRot;
         mainCamera.orthographicSize = originalCameraSize;
-
-        Debug.Log("[LootBoxInteraction] Camera returned to original position");
     }
 
     private void UpdateLootBoxLevelText()
@@ -384,7 +352,6 @@ public class LootBoxInteraction : MonoBehaviour
     {
         currentLootBoxLevel = Mathf.Clamp(level, 1, 10);
         UpdateLootBoxLevelText();
-        Debug.Log("[LootBoxInteraction] Loot box level set to: " + currentLootBoxLevel);
     }
 
     private void OnDestroy()
@@ -439,7 +406,6 @@ public class LootBoxInteraction : MonoBehaviour
         DeckRegistry registry = Resources.Load<DeckRegistry>("DeckRegistry");
         if (registry == null)
         {
-            Debug.LogError("[LootBoxInteraction] DeckRegistry not found!");
             return null;
         }
 
@@ -462,7 +428,6 @@ public class LootBoxInteraction : MonoBehaviour
             return stone;
         }
 
-        Debug.LogWarning($"[LootBoxInteraction] Reward item with ID '{itemId}' not found in registry");
         return null;
     }
 
@@ -478,7 +443,6 @@ public class LootBoxInteraction : MonoBehaviour
         DeckRegistry registry = Resources.Load<DeckRegistry>("DeckRegistry");
         if (registry == null)
         {
-            Debug.LogError("[LootBoxInteraction] DeckRegistry not found!");
             return null;
         }
 
@@ -503,7 +467,6 @@ public class LootBoxInteraction : MonoBehaviour
             return legendStoneData;
         }
 
-        Debug.LogWarning($"[LootBoxInteraction] Card/Legend/Guardian not found in registry: {cardName}");
         return null;
     }
 
@@ -515,13 +478,11 @@ public class LootBoxInteraction : MonoBehaviour
         DeckRegistry registry = Resources.Load<DeckRegistry>("DeckRegistry");
         if (registry == null)
         {
-            Debug.LogError("[LootBoxInteraction] DeckRegistry not found!");
             return null;
         }
 
         // CardData doesn't have a cardID field, so we can't search by ID
         // The CloudScript should return cardName instead
-        Debug.LogWarning($"[LootBoxInteraction] Card lookup by ID not supported. Use cardName instead. (ID: {cardId})");
         return null;
     }
 }

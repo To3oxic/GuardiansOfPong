@@ -20,11 +20,9 @@ public class AncientSpiritController : BaseUnitController
         // Ensure projectile settings are set in the Inspector
         if (projectilePrefab == null)
         {
-            Debug.LogError($"[AncientSpiritController] Projectile Prefab not set for {gameObject.name}!");
         }
         if (projectileSpawnPoint == null)
         {
-            Debug.LogWarning($"[AncientSpiritController] Projectile Spawn Point not set for {gameObject.name}, using default position.");
         }
     }
 

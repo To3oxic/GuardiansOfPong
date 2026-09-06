@@ -41,8 +41,6 @@ public class MainMenuController : MonoBehaviour
         Application.targetFrameRate = 60;
         QualitySettings.vSyncCount = 1;
 
-        Debug.Log("[MainMenuController] Set target framerate to 60 FPS and enabled VSync");
-
         if (startGameButton) startGameButton.onClick.AddListener(OnStartGame);
         if (deckButton) deckButton.onClick.AddListener(() => NavigateToScreen(DeckScreenName));
         if (shopButton) shopButton.onClick.AddListener(() => NavigateToScreen(ShopScreenName));
@@ -67,25 +65,19 @@ public class MainMenuController : MonoBehaviour
 
         if (!valid)
         {
-            Debug.LogWarning("[MainMenuController] Deck invalid. Go select 6–8 cards, 1 legend, 1 stone.");
             ShowScreen(DeckScreenName);
             return;
         }
 
         if (NetworkUI.Instance == null)
         {
-            Debug.LogError("[MainMenuController] NetworkUI not present. Add a root GameObject with NetworkObject + NetworkUI.");
             return;
         }
 
         NetworkUI.Instance.InitiateMatchmakingAndLoadScene(payload);
     }
 
-
-
     public void NavigateToScreen(string screenName) => ShowScreen(screenName);
-
-
 
     void OnStartServerClicked()
     {
@@ -126,7 +118,6 @@ public class MainMenuController : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("[MainMenuController] No UIManager or ScreenRouter assigned.");
         }
     }
 }

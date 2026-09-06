@@ -63,11 +63,9 @@ public class HealerGuardianController : GuardiansController
             instantiatedParticles.transform.localPosition = Vector3.zero;
             instantiatedParticles.transform.localRotation = Quaternion.identity;
             instantiatedParticles.SetActive(false);
-            Debug.Log($"[HealerGuardianController] Instantiated heal particles on paddle: {targetPaddle.name}");
         }
         else
         {
-            Debug.LogWarning("[HealerGuardianController] healParticlesPrefab is not assigned on the Healer prefab!");
         }
     }
 
@@ -82,7 +80,6 @@ public class HealerGuardianController : GuardiansController
             if (paddle != null && paddle.OwnerClientId == OwnerClientId)
             {
                 currentTarget = paddle.transform;
-                Debug.Log($"[HealerGuardianController] Target found: Owner's Paddle ({paddle.name})");
                 break;
             }
         }
@@ -125,7 +122,6 @@ public class HealerGuardianController : GuardiansController
                 // Using projectileDamage value if configured on the prefab, or a default healing value
                 float healAmount = projectileDamage > 0 ? projectileDamage : 150f;
                 paddle.ReduceHP(-healAmount);
-                Debug.Log($"[HealerGuardianController] Instantly healed owner paddle {paddle.name} for {healAmount} HP.");
 
                 // Trigger 2-second particle effect on all clients and server
                 TriggerHealVfxClientRpc();

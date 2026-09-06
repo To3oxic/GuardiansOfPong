@@ -138,10 +138,7 @@ public class SelectionCardHolder : MonoBehaviour
         // Set card level from player collection
         if (playerCard != null)
             levelText.text = $"Lv. {playerCard.level}";
-
-        Debug.Log($"[SelectionCardHolder] Setup card: {data.cardName}");
     }
-
 
     /// <summary>
     /// Setup guardian card (also CastingLegendData but marked as "guardian")
@@ -181,9 +178,6 @@ public class SelectionCardHolder : MonoBehaviour
         // Set card level from player collection
         if (playerCard != null)
             levelText.text = $"Lv. {playerCard.level}";
-
-
-        Debug.Log($"[SelectionCardHolder] Setup guardian: {data.legendName}");
     }
 
     /// <summary>
@@ -224,14 +218,10 @@ public class SelectionCardHolder : MonoBehaviour
         // Set card level from player collection
         if (playerCard != null)
             levelText.text = $"Lv. {playerCard.level}";
-
-        Debug.Log($"[SelectionCardHolder] Setup legendstone: {data.stoneName}");
     }
 
     private void OnCardClicked()
     {
-        Debug.Log($"[SelectionCardHolder] Card clicked. Selected: {isSelected}, IsOriginal: {originalHolder == null}");
-
         // If this is a copy, always show unselect button
         bool isCopy = (originalHolder != null);
 
@@ -285,16 +275,12 @@ public class SelectionCardHolder : MonoBehaviour
     {
         if (isSelected)
         {
-            Debug.LogWarning("[SelectionCardHolder] Card already selected!");
             return;
         }
-
-        Debug.Log($"[SelectionCardHolder] Select button pressed for {GetCardName()}");
 
         // Check if card is already in another holder
         if (selectionManager != null && selectionManager.IsCardAlreadySelected(GetCardId()))
         {
-            Debug.LogWarning($"[SelectionCardHolder] Card {GetCardId()} is already selected elsewhere!");
             return;
         }
 
@@ -316,7 +302,6 @@ public class SelectionCardHolder : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("[SelectionCardHolder] Failed to select card - container is full!");
         }
     }
 
@@ -324,11 +309,8 @@ public class SelectionCardHolder : MonoBehaviour
     {
         if (!isSelected && originalHolder == null)
         {
-            Debug.LogWarning("[SelectionCardHolder] Card is not selected!");
             return;
         }
-
-        Debug.Log($"[SelectionCardHolder] Unselect button pressed for {GetCardName()}");
 
         // If this is a copy, unselect the original
         if (originalHolder != null)
@@ -364,8 +346,6 @@ public class SelectionCardHolder : MonoBehaviour
 
     private void OnDetailsPressed()
     {
-        Debug.Log($"[SelectionCardHolder] Details button pressed for {GetCardName()}");
-
         // TODO: Show details popup
         // This will be implemented later
     }
@@ -471,7 +451,6 @@ public class SelectionCardHolder : MonoBehaviour
         }
 
         levelText.text = $"Lv. {cardLevel}";
-        Debug.Log($"[SelectionCardHolder] Updated level text for {cardId}: Lv. {cardLevel}");
     }
 
     /// <summary>
@@ -482,15 +461,11 @@ public class SelectionCardHolder : MonoBehaviour
         string cardId = GetCardId();
         if (string.IsNullOrEmpty(cardId))
         {
-            Debug.LogError("[SelectionCardHolder] Cannot level up - card ID is empty!");
             return;
         }
 
-        Debug.Log($"[SelectionCardHolder] Level up button pressed for card: {cardId}");
-
         if (PlayFabBackendManager.Instance == null)
         {
-            Debug.LogError("[SelectionCardHolder] PlayFabBackendManager not found!");
             return;
         }
 
@@ -499,13 +474,11 @@ public class SelectionCardHolder : MonoBehaviour
         {
             if (success)
             {
-                Debug.Log($"[SelectionCardHolder] Successfully leveled up card {cardId}");
                 // Update the level text after successful level up
                 UpdateCardLevel(cardId);
             }
             else
             {
-                Debug.LogError($"[SelectionCardHolder] Failed to level up card: {message}");
             }
         });
     }

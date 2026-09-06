@@ -21,7 +21,6 @@ public class ManaCell : MonoBehaviour
         rectTransform = GetComponent<RectTransform>();
         if (fillImage == null)
         {
-            Debug.LogWarning($"[ManaCell] No fill image assigned on {gameObject.name}");
         }
     }
 
@@ -59,7 +58,6 @@ public class ManaCell : MonoBehaviour
     {
         if (fillImage == null)
         {
-            Debug.LogWarning($"[ManaCell] Cannot animate - fill image not assigned on {gameObject.name}");
             return;
         }
 
@@ -77,8 +75,6 @@ public class ManaCell : MonoBehaviour
         // Start animation
         animationTimer = 0f;
         isAnimating = true;
-
-        Debug.Log($"[ManaCell] Starting fill animation on {gameObject.name}");
     }
 
     /// <summary>

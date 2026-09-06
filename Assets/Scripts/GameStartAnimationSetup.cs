@@ -14,7 +14,7 @@ GAME START ANIMATION SETUP:
    - Final position: Normal gameplay camera position
 
 2. LEGEND STONE POSITIONS:
-   - Create empty GameObjects for underground hatch positions  
+   - Create empty GameObjects for underground hatch positions
    - Hatch positions: Same X,Z as final but Y = -2 (underground)
    - Final positions: Normal LegendStone positions in scene
 
@@ -69,19 +69,14 @@ GAME START ANIMATION SETUP:
 
     private void AutoSetupPositions()
     {
-        Debug.Log("[GameStartAnimationSetup] Auto-setting up animation positions...");
-
         CreateCameraStartPosition();
         CreateHatchPositions();
-
-        Debug.Log("[GameStartAnimationSetup] Auto setup complete! Check the created GameObjects and assign them to GameStartAnimationController.");
     }
 
     private void CreateCameraStartPosition()
     {
         if (arenaCenter == null)
         {
-            Debug.LogError("Please assign Arena Center first!");
             return;
         }
 
@@ -92,8 +87,6 @@ GAME START ANIMATION SETUP:
 
         // Add visual indicator
         var icon = cameraStart.AddComponent<CameraSetupIcon>();
-
-        Debug.Log($"Created camera start position at {cameraStart.transform.position}");
     }
 
     private void CreateHatchPositions()
@@ -103,7 +96,6 @@ GAME START ANIMATION SETUP:
 
         if (stones.Length == 0)
         {
-            Debug.LogError("No LegendStoneController found in scene! Place LegendStones first.");
             return;
         }
 
@@ -118,8 +110,6 @@ GAME START ANIMATION SETUP:
 
             // Add visual indicator
             var icon = hatchPos.AddComponent<HatchSetupIcon>();
-
-            Debug.Log($"Created hatch position {i} at {hatchPos.transform.position}");
         }
     }
 }

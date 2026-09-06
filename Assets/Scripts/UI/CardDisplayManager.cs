@@ -26,7 +26,6 @@ public class CardDisplayManager : MonoBehaviour
         backendManager = PlayFabBackendManager.Instance;
         if (backendManager == null)
         {
-            Debug.LogError("[CardDisplayManager] PlayFabBackendManager not found!");
             return;
         }
     }
@@ -60,7 +59,6 @@ public class CardDisplayManager : MonoBehaviour
         {
             if (collection == null || collection.cards.Count == 0)
             {
-                Debug.LogWarning("[CardDisplayManager] No cards found");
                 if (cardsTitle != null)
                     cardsTitle.text = "No cards yet";
                 return;
@@ -73,8 +71,6 @@ public class CardDisplayManager : MonoBehaviour
             {
                 DisplayCard(card);
             }
-
-            Debug.Log($"[CardDisplayManager] Displayed {collection.cards.Count} cards");
         });
     }
 
@@ -119,38 +115,30 @@ public class CardDisplayManager : MonoBehaviour
 
     private void OnAwardTestCard()
     {
-        Debug.Log("[CardDisplayManager] Awarding test card...");
-
         // Award a test card named "Boulder Guardian"
         backendManager.AwardCardToPlayer("card_boulder", "Boulder Guardian", 1, (success) =>
         {
             if (success)
             {
-                Debug.Log("[CardDisplayManager] Test card awarded successfully");
                 RefreshCardDisplay();
             }
             else
             {
-                Debug.LogError("[CardDisplayManager] Failed to award test card");
             }
         });
     }
 
     private void OnLevelUpTestCard()
     {
-        Debug.Log("[CardDisplayManager] Leveling up test card...");
-
         // Level up the Boulder Guardian card (costs 100 currency)
         backendManager.LevelUpCard("card_boulder", 100, (success, message) =>
         {
             if (success)
             {
-                Debug.Log("[CardDisplayManager] Card leveled up successfully: " + message);
                 RefreshCardDisplay();
             }
             else
             {
-                Debug.LogError("[CardDisplayManager] Failed to level up card: " + message);
             }
         });
     }

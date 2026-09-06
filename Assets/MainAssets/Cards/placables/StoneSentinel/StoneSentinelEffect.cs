@@ -13,14 +13,12 @@ public class StoneSentinelEffect : CardEffect
     public override float GetEffectRadius() => 2f;
     public override void StartPlacement(Action<Vector3, Vector3> onPlacementConfirmed)
     {
-
     }
 
     public override GameObject GetPreviewPrefab()
     {
         if (stoneSentinelPrefab == null)
         {
-            Debug.LogError("[StoneSentinelEffect] stoneSentinelPrefab is not assigned!");
             return null;
         }
         return stoneSentinelPrefab;
@@ -37,13 +35,11 @@ public class StoneSentinelEffect : CardEffect
 
         if (GameManager.Instance == null)
         {
-            Debug.LogError("[StoneSentinelEffect] GameManager.Instance is null.");
             return null;
         }
 
         if (stoneSentinelPrefab == null)
         {
-            Debug.LogError("[StoneSentinelEffect] stoneSentinelPrefab is not assigned! Cannot apply effect.");
             return null;
         }
 
@@ -51,14 +47,12 @@ public class StoneSentinelEffect : CardEffect
         Quaternion initialRotation = Quaternion.LookRotation(direction);
         // Direction is provided by the drag & drop system based on paddle position
         position.y = 0;
-        Debug.Log($"[StoneSentinelEffect] Attempting to instantiate StoneSentinel: {stoneSentinelPrefab.name} at position: {position}, rotation: {initialRotation.eulerAngles}, level: {cardLevel}");
         GameObject sentinelInstance = GameObject.Instantiate(stoneSentinelPrefab, position, initialRotation);
 
         NetworkObject netObj = sentinelInstance.GetComponent<NetworkObject>();
         if (netObj != null)
         {
             netObj.SpawnWithOwnership(playerId);
-            Debug.Log($"[StoneSentinelEffect] StoneSentinel ({stoneSentinelPrefab.name}) network object spawned for player {playerId}.");
 
             // Apply leveled stats to the unit
             BaseUnitController unit = sentinelInstance.GetComponent<BaseUnitController>();
@@ -83,7 +77,6 @@ public class StoneSentinelEffect : CardEffect
         }
         else
         {
-            Debug.LogWarning($"[StoneSentinelEffect] StoneSentinel prefab ({stoneSentinelPrefab.name}) is missing NetworkObject component!");
             GameObject.Destroy(sentinelInstance); // Clean up unspawnable instance
             return null;
         }

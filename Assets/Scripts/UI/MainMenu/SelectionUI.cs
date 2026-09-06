@@ -63,7 +63,6 @@ public class SelectionUI : MonoBehaviour
 
     public void Activate()
     {
-        Debug.Log("[SelectionUI] Activate called.");
         // Stop any existing coroutine
         if (showCoroutine != null)
         {
@@ -118,7 +117,6 @@ public class SelectionUI : MonoBehaviour
 
     private void OnToggleButtonPressed()
     {
-        Debug.Log("[SelectionUI] Toggle button pressed.");
         if (containerToResize == null)
             return;
 
@@ -126,8 +124,6 @@ public class SelectionUI : MonoBehaviour
 
         Vector2 targetSize = isExpanded ? originalSize : shrunkSize;
         containerToResize.sizeDelta = targetSize;
-
-        Debug.Log($"[SelectionUI] Container toggled. Expanded: {isExpanded}, Size: {targetSize}");
     }
 
     /// <summary>
@@ -140,7 +136,6 @@ public class SelectionUI : MonoBehaviour
 
         isExpanded = false;
         containerToResize.sizeDelta = shrunkSize;
-        Debug.Log($"[SelectionUI] Container shrunk by default. Size: {shrunkSize}");
     }
 
     /// <summary>
@@ -150,28 +145,24 @@ public class SelectionUI : MonoBehaviour
     {
         if (selectionCardManager == null)
         {
-            Debug.LogWarning("[SelectionUI] SelectionCardManager not found!");
             return;
         }
 
         SelectionCardHolder guardianHolder = selectionCardManager.GetGuardian();
         if (guardianHolder == null)
         {
-            Debug.LogWarning("[SelectionUI] No guardian selected!");
             return;
         }
 
         object guardianData = guardianHolder.GetPublicCardData();
         if (guardianData is not CastingLegendData castingLegend)
         {
-            Debug.LogWarning("[SelectionUI] Guardian data is not CastingLegendData!");
             return;
         }
 
         // Find the guardian prefab in the registry
         if (deckRegistry == null || deckRegistry.allGuardians == null)
         {
-            Debug.LogError("[SelectionUI] DeckRegistry not found or has no guardians!");
             return;
         }
 
@@ -187,7 +178,6 @@ public class SelectionUI : MonoBehaviour
 
         if (guardianPrefab == null)
         {
-            Debug.LogError($"[SelectionUI] Guardian prefab not found for: {castingLegend.legendName}");
             return;
         }
 
@@ -203,11 +193,9 @@ public class SelectionUI : MonoBehaviour
             currentGuardianInstance = Instantiate(guardianPrefab, guardianSpawnPoint.position,
                 guardianSpawnPoint.rotation);
             currentGuardianInstance.transform.SetParent(guardianSpawnPoint.parent);
-            Debug.Log($"[SelectionUI] Spawned guardian: {castingLegend.legendName}");
         }
         else
         {
-            Debug.LogWarning("[SelectionUI] Guardian spawn point not assigned!");
         }
     }
 

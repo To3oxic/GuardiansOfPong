@@ -28,8 +28,6 @@ public class MatchmakingUIManager : MonoBehaviour
     {
         if (queueButton != null)
             queueButton.onClick.AddListener(OnQueueButtonClicked);
-
-        Debug.Log("[Matchmaking] MatchmakingUIManager initialized");
     }
 
     void OnDestroy()
@@ -44,7 +42,6 @@ public class MatchmakingUIManager : MonoBehaviour
 
     private void OnQueueButtonClicked()
     {
-        Debug.Log("[Matchmaking] Queue button clicked");
         JoinQueue();
     }
 
@@ -52,22 +49,18 @@ public class MatchmakingUIManager : MonoBehaviour
     {
         if (!PlayFabBackendManager.Instance.IsLoggedIn())
         {
-            Debug.LogError("[Matchmaking] Not logged in");
             return;
         }
 
-        Debug.Log("[Matchmaking] Joining queue...");
         queueButton.interactable = false;
 
         // Start matchmaking with callbacks
         PlayFabBackendManager.Instance.StartMatchmaking(
             matchData =>
             {
-                Debug.Log("[Matchmaking] Matchmaking initiated, polling started");
             },
             error =>
             {
-                Debug.LogError($"[Matchmaking] Failed to start matchmaking: {error}");
                 queueButton.interactable = true;
             }
         );
@@ -79,11 +72,9 @@ public class MatchmakingUIManager : MonoBehaviour
 
     private void OnMatchFound()
     {
-        Debug.Log("[Matchmaking] Match found and connected to server!");
         var matchData = PlayFabBackendManager.Instance.CurrentMatchData;
         if (matchData != null)
         {
-            Debug.Log($"[Matchmaking] Loading game scene with match: {matchData.MatchId}");
             // Connection to server is already complete, now load game scene
             SceneManager.LoadScene("GameScene");
         }
@@ -91,9 +82,7 @@ public class MatchmakingUIManager : MonoBehaviour
 
     private void OnMatchError(string error)
     {
-        Debug.LogError($"[Matchmaking] Match error: {error}");
         queueButton.interactable = true;
     }
 }
-
 

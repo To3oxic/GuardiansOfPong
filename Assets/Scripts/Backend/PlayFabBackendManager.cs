@@ -91,11 +91,9 @@ public class PlayFabBackendManager : MonoBehaviour
             dataApi = new PlayFabDataInstanceAPI(PlayFabSettings.staticSettings, authContext);
 
             isInitialized = true;
-            Debug.Log($"[PlayFab] Initialized with Title ID: {titleId}");
         }
         catch (Exception ex)
         {
-            Debug.LogError($"[PlayFab] Initialization failed: {ex.Message}");
         }
     }
 
@@ -109,7 +107,6 @@ public class PlayFabBackendManager : MonoBehaviour
     {
         if (!isInitialized)
         {
-            Debug.LogError("[PlayFab] Not initialized. Call InitializePlayFab first.");
             OnLoginError?.Invoke("PlayFab not initialized");
             return;
         }
@@ -148,7 +145,6 @@ public class PlayFabBackendManager : MonoBehaviour
     {
         if (!isInitialized)
         {
-            Debug.LogError("[PlayFab] Not initialized.");
             OnLoginError?.Invoke("PlayFab not initialized");
             return;
         }
@@ -163,8 +159,6 @@ public class PlayFabBackendManager : MonoBehaviour
         clientApi.RegisterPlayFabUser(request,
             result =>
             {
-                Debug.Log($"[PlayFab] Registration successful. PlayFabId: {result.PlayFabId}");
-
                 // Auto-login after registration
                 LoginWithEmailAndPassword(email, password, null);
 
@@ -172,7 +166,6 @@ public class PlayFabBackendManager : MonoBehaviour
             },
             error =>
             {
-                Debug.LogError($"[PlayFab] Registration failed: {error.ErrorMessage}");
                 OnLoginError?.Invoke(error.ErrorMessage);
             }
         );
@@ -200,8 +193,6 @@ public class PlayFabBackendManager : MonoBehaviour
             CreatedTime = result.InfoResultPayload?.PlayerProfile?.Created
         };
 
-        Debug.Log($"[PlayFab] Login successful. PlayFabId: {result.PlayFabId}, DisplayName: {cachedPlayerData.DisplayName}");
-
         // Set player profile in PlayerStates
         if (PlayerStates.Instance != null)
         {
@@ -214,20 +205,15 @@ public class PlayFabBackendManager : MonoBehaviour
         // Load all player state (cards, decks, inventory) from CloudScript in one call
         LoadPlayerState(() =>
         {
-            Debug.Log("[PlayFab] Player state loaded completely");
-
             // Mark login sequence as complete
             _isLoginComplete = true;
-            Debug.Log("[PlayFab] === LOGIN SEQUENCE COMPLETE ===");
 
             OnLoginSuccess?.Invoke();
         });
-
     }
 
     private void HandleLoginError(PlayFabError error)
     {
-        Debug.LogError($"[PlayFab] Login failed: Code={error.HttpCode}, Message={error.ErrorMessage}");
         OnLoginError?.Invoke(error.ErrorMessage);
     }
 
@@ -259,7 +245,6 @@ public class PlayFabBackendManager : MonoBehaviour
         }
         cachedDecks.Clear();
         _isLoginComplete = false;  // Reset login complete flag
-        Debug.Log("[PlayFab] Logged out");
     }
 
     // ========== PLAYER DATA METHODS ==========
@@ -309,7 +294,6 @@ public class PlayFabBackendManager : MonoBehaviour
     {
         if (!IsLoggedIn())
         {
-            Debug.LogError("[PlayFab] Cannot save deck: Not logged in");
             callback?.Invoke(false);
             return;
         }
@@ -328,7 +312,6 @@ public class PlayFabBackendManager : MonoBehaviour
                 // Check if cloud function executed successfully
                 if (result.FunctionResult == null)
                 {
-                    Debug.LogError("[PlayFab] SaveDeck cloud function returned null");
                     callback?.Invoke(false);
                     return;
                 }
@@ -338,7 +321,6 @@ public class PlayFabBackendManager : MonoBehaviour
 
                 if (functionResult == null || !functionResult.ContainsKey("success"))
                 {
-                    Debug.LogError("[PlayFab] SaveDeck: Invalid response format");
                     callback?.Invoke(false);
                     return;
                 }
@@ -347,20 +329,17 @@ public class PlayFabBackendManager : MonoBehaviour
 
                 if (success)
                 {
-                    Debug.Log($"[PlayFab] Deck '{deckName}' saved successfully with {cardIds.Count} cards");
                     OnDeckSaved?.Invoke(deckName);
                     callback?.Invoke(true);
                 }
                 else
                 {
                     string error = functionResult.ContainsKey("error") ? functionResult["error"].ToString() : "Unknown error";
-                    Debug.LogError($"[PlayFab] SaveDeck failed: {error}");
                     callback?.Invoke(false);
                 }
             },
             error =>
             {
-                Debug.LogError($"[PlayFab] SaveDeck cloud function call failed: {error.ErrorMessage}");
                 callback?.Invoke(false);
             }
         );
@@ -376,7 +355,6 @@ public class PlayFabBackendManager : MonoBehaviour
     {
         if (!IsLoggedIn() || string.IsNullOrEmpty(authContext.EntityToken))
         {
-            Debug.LogError("[PlayFab] Cannot load decks: Not logged in or EntityToken missing");
             callback?.Invoke(new List<SavedDeck>());
             return;
         }
@@ -398,10 +376,8 @@ public class PlayFabBackendManager : MonoBehaviour
 
                 if (result.Objects != null)
                 {
-                    Debug.Log($"[PlayFab] Retrieved {result.Objects.Count} objects from Data API");
                     foreach (var kvp in result.Objects)
                     {
-                        Debug.Log($"[PlayFab] Processing object: {kvp.Key}");
                         if (kvp.Key.StartsWith("active_deck"))
                         {
                             try
@@ -420,11 +396,9 @@ public class PlayFabBackendManager : MonoBehaviour
                                 }
                                 else
                                 {
-                                    Debug.LogWarning($"[PlayFab] DataObject is null for deck {kvp.Key}");
                                     continue;
                                 }
 
-                                Debug.Log($"[PlayFab] Parsing deck JSON: {jsonData.Substring(0, Mathf.Min(100, jsonData.Length))}...");
                                 SavedDeck deck = JsonUtility.FromJson<SavedDeck>(jsonData);
 
                                 cachedDecks[deck.DeckName] = deck;
@@ -432,19 +406,16 @@ public class PlayFabBackendManager : MonoBehaviour
                             }
                             catch (Exception ex)
                             {
-                                Debug.LogWarning($"[PlayFab] Failed to parse deck {kvp.Key}: {ex.Message}");
                             }
                         }
                     }
                 }
 
-                Debug.Log($"[PlayFab] Loaded {deckList.Count} decks");
                 OnDecksLoaded?.Invoke();
                 callback?.Invoke(deckList);
             },
             error =>
             {
-                Debug.LogError($"[PlayFab] Failed to load decks: {error.ErrorMessage}");
                 callback?.Invoke(new List<SavedDeck>());
             }
         );
@@ -471,7 +442,6 @@ public class PlayFabBackendManager : MonoBehaviour
     {
         if (!IsLoggedIn() || string.IsNullOrEmpty(authContext.EntityToken))
         {
-            Debug.LogError("[PlayFab] Cannot load active deck: Not logged in");
             callback?.Invoke(null);
             return;
         }
@@ -508,19 +478,15 @@ public class PlayFabBackendManager : MonoBehaviour
                         }
                         else
                         {
-                            Debug.LogWarning("[PlayFab] Active deck DataObject is null");
                         }
 
                         if (!string.IsNullOrEmpty(jsonData))
                         {
-                            Debug.Log($"[PlayFab] Parsing active deck JSON: {jsonData.Substring(0, Mathf.Min(100, jsonData.Length))}...");
                             activeDeck = JsonUtility.FromJson<SavedDeck>(jsonData);
-                            Debug.Log($"[PlayFab] Loaded active deck: {activeDeck?.DeckName}");
                         }
                     }
                     catch (Exception ex)
                     {
-                        Debug.LogWarning($"[PlayFab] Failed to parse active deck: {ex.Message}");
                     }
                 }
 
@@ -528,7 +494,6 @@ public class PlayFabBackendManager : MonoBehaviour
             },
             error =>
             {
-                Debug.LogError($"[PlayFab] Failed to load active deck: {error.ErrorMessage}");
                 callback?.Invoke(null);
             }
         );
@@ -544,7 +509,6 @@ public class PlayFabBackendManager : MonoBehaviour
     {
         if (!IsLoggedIn())
         {
-            Debug.LogError("[PlayFab] Cannot save active deck: Not logged in");
             callback?.Invoke(false);
             return;
         }
@@ -561,7 +525,6 @@ public class PlayFabBackendManager : MonoBehaviour
 
         if (cardIds.Count == 0)
         {
-            Debug.LogError("[PlayFab] Cannot save active deck: No valid cards");
             callback?.Invoke(false);
             return;
         }
@@ -582,7 +545,6 @@ public class PlayFabBackendManager : MonoBehaviour
                     // Check if cloud function executed successfully
                     if (result.FunctionResult == null)
                     {
-                        Debug.LogError("[PlayFab] SaveActiveDeck cloud function returned null");
                         callback?.Invoke(false);
                         return;
                     }
@@ -593,13 +555,11 @@ public class PlayFabBackendManager : MonoBehaviour
                     // Try as JsonObject first (PlayFab SDK format)
                     if (result.FunctionResult is PlayFab.Json.JsonObject jsonObj)
                     {
-                        Debug.Log("[PlayFab] SaveActiveDeck response is JsonObject, converting...");
                         functionResult = new System.Collections.Generic.Dictionary<string, object>();
                         foreach (var key in jsonObj.Keys)
                         {
                             if (key == null)
                             {
-                                Debug.LogWarning("[PlayFab] Skipping null key in SaveActiveDeck response");
                                 continue;
                             }
                             functionResult[key] = jsonObj[key];
@@ -613,10 +573,8 @@ public class PlayFabBackendManager : MonoBehaviour
 
                     if (functionResult == null || !functionResult.ContainsKey("success"))
                     {
-                        Debug.LogError("[PlayFab] SaveActiveDeck: Invalid response format");
                         if (functionResult != null)
                         {
-                            Debug.LogError($"[PlayFab] Available keys: {string.Join(", ", functionResult.Keys)}");
                         }
                         callback?.Invoke(false);
                         return;
@@ -626,8 +584,6 @@ public class PlayFabBackendManager : MonoBehaviour
 
                     if (success)
                     {
-                        Debug.Log($"[PlayFab] Active deck '{deckName}' saved successfully with {cardIds.Count} items");
-
                         // Update PlayerStates with active deck so UI is updated immediately
                         if (PlayerStates.Instance != null)
                         {
@@ -638,7 +594,6 @@ public class PlayFabBackendManager : MonoBehaviour
                                 LastModified = System.DateTime.UtcNow
                             };
                             PlayerStates.Instance.SetActiveDeck(activeDeck);
-                            Debug.Log("[PlayFab] Updated PlayerStates with active deck");
                         }
 
                         OnDeckSaved?.Invoke(deckName);
@@ -647,19 +602,16 @@ public class PlayFabBackendManager : MonoBehaviour
                     else
                     {
                         string error = functionResult.ContainsKey("error") ? functionResult["error"].ToString() : "Unknown error";
-                        Debug.LogError($"[PlayFab] SaveActiveDeck failed: {error}");
                         callback?.Invoke(false);
                     }
                 }
                 catch (Exception ex)
                 {
-                    Debug.LogError($"[PlayFab] Error processing SaveActiveDeck response: {ex.Message}");
                     callback?.Invoke(false);
                 }
             },
             error =>
             {
-                Debug.LogError($"[PlayFab] SaveActiveDeck cloud function call failed: {error.ErrorMessage}");
                 callback?.Invoke(false);
             }
         );
@@ -685,7 +637,6 @@ public class PlayFabBackendManager : MonoBehaviour
     {
         if (!IsLoggedIn())
         {
-            Debug.LogError("[PlayFab] Cannot update stats: Not logged in");
             callback?.Invoke(false);
             return;
         }
@@ -705,12 +656,10 @@ public class PlayFabBackendManager : MonoBehaviour
         clientApi.UpdatePlayerStatistics(request,
             result =>
             {
-                Debug.Log($"[PlayFab] Card {cardId} level updated to {level}");
                 callback?.Invoke(true);
             },
             error =>
             {
-                Debug.LogError($"[PlayFab] Failed to update card level: {error.ErrorMessage}");
                 callback?.Invoke(false);
             }
         );
@@ -726,7 +675,6 @@ public class PlayFabBackendManager : MonoBehaviour
     {
         if (!IsLoggedIn())
         {
-            Debug.LogError("[PlayFab] Cannot execute CloudScript: Not logged in");
             errorCallback?.Invoke("Not logged in");
             return;
         }
@@ -742,15 +690,12 @@ public class PlayFabBackendManager : MonoBehaviour
             {
                 if (result.FunctionResultTooLarge ?? false)
                 {
-                    Debug.LogWarning($"[PlayFab] CloudScript result too large for {functionName}");
                 }
 
-                Debug.Log($"[PlayFab] CloudScript '{functionName}' executed successfully");
                 successCallback?.Invoke(result.FunctionResult);
             },
             error =>
             {
-                Debug.LogError($"[PlayFab] CloudScript execution failed: {error.ErrorMessage}");
                 errorCallback?.Invoke(error.ErrorMessage);
             }
         );
@@ -797,7 +742,6 @@ public class PlayFabBackendManager : MonoBehaviour
     {
         if (!IsLoggedIn())
         {
-            Debug.LogError("[PlayFab] Cannot load player state: Not logged in");
             onComplete?.Invoke();
             return;
         }
@@ -817,12 +761,9 @@ public class PlayFabBackendManager : MonoBehaviour
                 {
                     if (result.FunctionResult == null)
                     {
-                        Debug.LogError("[PlayFab] getPlayerState returned null");
                         onComplete?.Invoke();
                         return;
                     }
-
-                    Debug.Log($"[PlayFab] FunctionResult type: {result.FunctionResult.GetType()}");
 
                     // Parse the response - it might be JsonObject or Dictionary
                     System.Collections.Generic.Dictionary<string, object> functionResult = null;
@@ -830,14 +771,12 @@ public class PlayFabBackendManager : MonoBehaviour
                     // Try as JsonObject first (PlayFab SDK format)
                     if (result.FunctionResult is PlayFab.Json.JsonObject jsonObj)
                     {
-                        Debug.Log("[PlayFab] Response is JsonObject, converting...");
                         functionResult = new System.Collections.Generic.Dictionary<string, object>();
                         foreach (var key in jsonObj.Keys)
                         {
                             // Skip null keys
                             if (key == null)
                             {
-                                Debug.LogWarning("[PlayFab] Skipping null key in JsonObject");
                                 continue;
                             }
                             functionResult[key] = jsonObj[key];
@@ -851,10 +790,8 @@ public class PlayFabBackendManager : MonoBehaviour
 
                     if (functionResult == null || !functionResult.ContainsKey("success"))
                     {
-                        Debug.LogError("[PlayFab] getPlayerState: Invalid response format - no 'success' key");
                         if (functionResult != null)
                         {
-                            Debug.LogError($"[PlayFab] Available keys: {string.Join(", ", functionResult.Keys)}");
                         }
                         onComplete?.Invoke();
                         return;
@@ -863,7 +800,6 @@ public class PlayFabBackendManager : MonoBehaviour
                     bool success = (bool)functionResult["success"];
                     if (!success)
                     {
-                        Debug.LogError("[PlayFab] getPlayerState failed: " + (functionResult.ContainsKey("error") ? functionResult["error"] : "Unknown error"));
                         onComplete?.Invoke();
                         return;
                     }
@@ -872,8 +808,6 @@ public class PlayFabBackendManager : MonoBehaviour
                     cachedCardCollection = new PlayerCardCollection();
                     if (functionResult.ContainsKey("cards") && functionResult["cards"] is System.Collections.Generic.List<object> cardsList)
                     {
-                        Debug.Log($"[PlayFab] Found {cardsList.Count} cards in response");
-
                         foreach (var cardObj in cardsList)
                         {
                             try
@@ -884,8 +818,6 @@ public class PlayFabBackendManager : MonoBehaviour
                                 // Try to extract fields directly from the object
                                 if (cardObj is PlayFab.Json.JsonObject jsonCard)
                                 {
-                                    Debug.Log($"[PlayFab] Card is JsonObject with keys: {string.Join(", ", jsonCard.Keys)}");
-
                                     card.cardId = SafeGetString(jsonCard, "cardId");
                                     card.cardName = SafeGetString(jsonCard, "cardName");
                                     card.level = SafeGetInt(jsonCard, "level");
@@ -902,8 +834,6 @@ public class PlayFabBackendManager : MonoBehaviour
                                 }
                                 else if (cardObj is System.Collections.Generic.Dictionary<string, object> dictCard)
                                 {
-                                    Debug.Log($"[PlayFab] Card is Dictionary with keys: {string.Join(", ", dictCard.Keys)}");
-
                                     // Convert Dictionary to JSON string and parse it
                                     string dictStr = JsonUtility.ToJson(dictCard);
                                     var parsedCard = JsonUtility.FromJson<PlayerCardOwnership>(dictStr);
@@ -915,24 +845,19 @@ public class PlayFabBackendManager : MonoBehaviour
                                     card.timesAcquired = parsedCard.timesAcquired;
                                 }
 
-                                Debug.Log($"[PlayFab] Parsed card - cardId: {card.cardId}, cardName: {card.cardName}, level: {card.level}, qty: {card.quantity}");
-
                                 if (!string.IsNullOrEmpty(card.cardId) && !string.IsNullOrEmpty(card.cardName))
                                 {
                                     cachedCardCollection.cards.Add(card);
                                 }
                                 else
                                 {
-                                    Debug.LogWarning($"[PlayFab] Card has empty cardId or cardName, skipping!");
                                 }
                             }
                             catch (Exception cardEx)
                             {
-                                Debug.LogWarning($"[PlayFab] Failed to parse card object: {cardEx.Message}\n{cardEx.StackTrace}");
                             }
                         }
                     }
-                    Debug.Log($"[PlayFab] Loaded {cachedCardCollection.cards.Count} cards into collection");
 
                     // ===== EXTRACT ACTIVE DECK =====
                     SavedDeck? activeDeck = null;
@@ -941,7 +866,6 @@ public class PlayFabBackendManager : MonoBehaviour
                         try
                         {
                             object deckObj = functionResult["activeDeck"];
-                            Debug.Log($"[PlayFab] deckobj: {deckObj}");
 
                             // Parse the response to get deck name and card IDs
                             string deckName = null;
@@ -996,13 +920,10 @@ public class PlayFabBackendManager : MonoBehaviour
                                     Cards = deckCards,
                                     LastModified = System.DateTime.UtcNow
                                 };
-
-                                Debug.Log($"[PlayFab] Loaded active deck: {activeDeck?.DeckName} with {deckCards.Count} cards for UI selection");
                             }
                         }
                         catch (Exception deckEx)
                         {
-                            Debug.LogWarning($"[PlayFab] Failed to parse active deck: {deckEx.Message}");
                         }
                     }
 
@@ -1012,15 +933,12 @@ public class PlayFabBackendManager : MonoBehaviour
                     {
                         try
                         {
-
                             object invObj = functionResult["inventory"];
 
                             // Extract gems and gold directly from JsonObject or Dictionary
                             if (invObj is PlayFab.Json.JsonObject jsonInv)
                             {
-                                Debug.Log($"[PlayFab] Inventory is JsonObject with keys: {string.Join(", ", jsonInv.Keys)}");
                                 string invStr = jsonInv.ToString();
-                                Debug.Log($"[PlayFab] Inventory content: {invStr}");
                                 var inv = JsonUtility.FromJson<InventoryData>(invStr);
                                 gems = inv.gems;
                                 gold = inv.gold;
@@ -1030,12 +948,9 @@ public class PlayFabBackendManager : MonoBehaviour
                                 gems = SafeGetIntFromDict(invDict, "gems");
                                 gold = SafeGetIntFromDict(invDict, "gold");
                             }
-
-                            Debug.Log($"[PlayFab] Loaded inventory: {gems} gems, {gold} gold");
                         }
                         catch (Exception invEx)
                         {
-                            Debug.LogWarning($"[PlayFab] Failed to parse inventory: {invEx.Message}");
                         }
                     }
 
@@ -1048,31 +963,23 @@ public class PlayFabBackendManager : MonoBehaviour
                         // Set gems/gold
                         PlayerStates.Instance.Gems = gems;
                         PlayerStates.Instance.Gold = gold;
-                        Debug.Log($"[PlayFab] PlayerStates updated: {gems} gems, {gold} gold");
 
                         // Set active deck (marks _activeDeckLoaded = true)
                         PlayerStates.Instance.SetActiveDeck(activeDeck);
-
-                        Debug.Log("[PlayFab] PlayerStates updated with all player data");
                     }
                     else
                     {
-                        Debug.LogError("[PlayFab] PlayerStates.Instance is NULL during LoadPlayerState callback. Scene may not be loaded yet.");
-                        Debug.LogError("[PlayFab] Ensure PlayerStates is in the scene BEFORE login, or call login after scene loads.");
                     }
 
-                    Debug.Log("[PlayFab] Player state loaded successfully");
                     onComplete?.Invoke();
                 }
                 catch (Exception ex)
                 {
-                    Debug.LogError($"[PlayFab] Error loading player state: {ex.Message}");
                     onComplete?.Invoke();
                 }
             },
             error =>
             {
-                Debug.LogError($"[PlayFab] Failed to load player state: {error.ErrorMessage}");
                 onComplete?.Invoke();
             }
         );
@@ -1087,7 +994,6 @@ public class PlayFabBackendManager : MonoBehaviour
     {
         if (!IsLoggedIn())
         {
-            Debug.LogError("[PlayFab] Cannot load card collection: Not logged in");
             callback?.Invoke(new PlayerCardCollection());
             return;
         }
@@ -1104,7 +1010,6 @@ public class PlayFabBackendManager : MonoBehaviour
     {
         if (!isInitialized)
         {
-            Debug.LogError("[PlayFab] Cannot load card library: Not initialized");
             callback?.Invoke(new CardLibrary());
             return;
         }
@@ -1113,7 +1018,6 @@ public class PlayFabBackendManager : MonoBehaviour
         // For now, this loads from local DeckRegistry
         LoadCardLibraryFromDeckRegistry();
 
-        Debug.Log($"[PlayFab] Loaded card library with {cachedCardLibrary.cards.Count} cards");
         callback?.Invoke(cachedCardLibrary);
     }
 
@@ -1145,7 +1049,7 @@ public class PlayFabBackendManager : MonoBehaviour
     /// <summary>
     /// Award card copies to the player and save to PlayFab.
     /// <summary>
-    /// Award card copies to player. 
+    /// Award card copies to player.
     /// Automatically unlocks card (sets Level 1) on first copy.
     /// Does NOT auto-level - player must manually upgrade with currency.
     /// </summary>
@@ -1153,7 +1057,6 @@ public class PlayFabBackendManager : MonoBehaviour
     {
         if (!IsLoggedIn() || string.IsNullOrEmpty(authContext.EntityToken))
         {
-            Debug.LogError("[PlayFab] Cannot award card: Not logged in");
             callback?.Invoke(false);
             return;
         }
@@ -1165,7 +1068,6 @@ public class PlayFabBackendManager : MonoBehaviour
         var card = cachedCardCollection.cards.Find(c => c.cardId == cardId);
         if (card != null)
         {
-            Debug.Log($"[PlayFab] Awarded {copiesToAdd} copy/copies of {cardName}. Total owned: {card.quantity}, Level: {card.level}");
         }
 
         // Save to PlayFab
@@ -1184,7 +1086,6 @@ public class PlayFabBackendManager : MonoBehaviour
     {
         if (!IsLoggedIn() || string.IsNullOrEmpty(authContext.EntityToken))
         {
-            Debug.LogError("[PlayFab] Cannot level up card: Not logged in");
             callback?.Invoke(false, "Not logged in");
             return;
         }
@@ -1205,7 +1106,6 @@ public class PlayFabBackendManager : MonoBehaviour
                     // Check if cloud function executed successfully
                     if (result.FunctionResult == null)
                     {
-                        Debug.LogError("[PlayFab] LevelUpCard cloud function returned null");
                         callback?.Invoke(false, "Cloud function returned null");
                         return;
                     }
@@ -1216,13 +1116,11 @@ public class PlayFabBackendManager : MonoBehaviour
                     // Try as JsonObject first (PlayFab SDK format)
                     if (result.FunctionResult is PlayFab.Json.JsonObject jsonObj)
                     {
-                        Debug.Log("[PlayFab] LevelUpCard response is JsonObject, converting...");
                         functionResult = new System.Collections.Generic.Dictionary<string, object>();
                         foreach (var key in jsonObj.Keys)
                         {
                             if (key == null)
                             {
-                                Debug.LogWarning("[PlayFab] Skipping null key in LevelUpCard response");
                                 continue;
                             }
                             functionResult[key] = jsonObj[key];
@@ -1236,7 +1134,6 @@ public class PlayFabBackendManager : MonoBehaviour
 
                     if (functionResult == null || !functionResult.ContainsKey("success"))
                     {
-                        Debug.LogError("[PlayFab] LevelUpCard: Invalid response format");
                         callback?.Invoke(false, "Invalid response format");
                         return;
                     }
@@ -1245,8 +1142,6 @@ public class PlayFabBackendManager : MonoBehaviour
 
                     if (success)
                     {
-                        Debug.Log($"[PlayFab] Card {cardId} leveled up successfully");
-
                         // Extract updated card and inventory from response
                         if (functionResult.ContainsKey("card"))
                         {
@@ -1282,23 +1177,18 @@ public class PlayFabBackendManager : MonoBehaviour
                                         PlayerStates.Instance.Gold = inventory.gold;
                                     }
                                 }
-
-                                Debug.Log($"[PlayFab] Card {cardId} now Level {updatedCard.level}, Quantity: {updatedCard.quantity}");
                             }
                             catch (Exception parseEx)
                             {
-                                Debug.LogWarning($"[PlayFab] Failed to parse updated card data: {parseEx.Message}");
                             }
                         }
 
                         // Reload player state to ensure everything is synced
-                        Debug.Log($"[PlayFab] Reloading player state after level up...");
                         LoadPlayerState(() =>
                         {
                             var finalCard = cachedCardCollection.cards.Find(c => c.cardId == cardId);
                             if (finalCard != null)
                             {
-                                Debug.Log($"[PlayFab] Level up complete - Card {cardId} final level: {finalCard.level}");
                             }
                             callback?.Invoke(true, "Card leveled up successfully");
                         });
@@ -1306,19 +1196,16 @@ public class PlayFabBackendManager : MonoBehaviour
                     else
                     {
                         string error = functionResult.ContainsKey("error") ? functionResult["error"].ToString() : "Unknown error";
-                        Debug.LogError($"[PlayFab] LevelUpCard failed: {error}");
                         callback?.Invoke(false, error);
                     }
                 }
                 catch (Exception ex)
                 {
-                    Debug.LogError($"[PlayFab] Error processing LevelUpCard response: {ex.Message}");
                     callback?.Invoke(false, "Error processing response: " + ex.Message);
                 }
             },
             error =>
             {
-                Debug.LogError($"[PlayFab] LevelUpCard cloud function call failed: {error.ErrorMessage}");
                 callback?.Invoke(false, error.ErrorMessage);
             }
         );
@@ -1379,7 +1266,6 @@ public class PlayFabBackendManager : MonoBehaviour
         {
             if (success)
             {
-                Debug.Log("[PlayFab] Initialized new player with starter cards");
             }
         });
     }
@@ -1391,7 +1277,6 @@ public class PlayFabBackendManager : MonoBehaviour
     {
         if (!IsLoggedIn() || string.IsNullOrEmpty(authContext.EntityToken))
         {
-            Debug.LogError("[PlayFab] Cannot save card collection: Not logged in");
             callback?.Invoke(false);
             return;
         }
@@ -1418,12 +1303,10 @@ public class PlayFabBackendManager : MonoBehaviour
         dataApi.SetObjects(request,
             result =>
             {
-                Debug.Log("[PlayFab] Card collection saved successfully");
                 callback?.Invoke(true);
             },
             error =>
             {
-                Debug.LogError($"[PlayFab] Failed to save card collection: {error.ErrorMessage}");
                 callback?.Invoke(false);
             }
         );
@@ -1441,7 +1324,6 @@ public class PlayFabBackendManager : MonoBehaviour
         var registry = Resources.Load<DeckRegistry>("DeckRegistry");
         if (registry == null)
         {
-            Debug.LogWarning("[PlayFab] DeckRegistry not found in Resources");
             return;
         }
 
@@ -1486,8 +1368,6 @@ public class PlayFabBackendManager : MonoBehaviour
                 starterCard = false
             });
         }
-
-        Debug.Log($"[PlayFab] Loaded {cachedCardLibrary.cards.Count} cards from DeckRegistry");
     }
 
     /// <summary>
@@ -1523,7 +1403,6 @@ public class PlayFabBackendManager : MonoBehaviour
         // Save to PlayFab
         SavePlayerCardCollection(() =>
         {
-            Debug.Log("[PlayFab] Player card collection initialized with " + newCollection.cards.Count + " cards");
         });
     }
 
@@ -1534,7 +1413,6 @@ public class PlayFabBackendManager : MonoBehaviour
     {
         if (!IsLoggedIn())
         {
-            Debug.LogError("[PlayFab] Not logged in, cannot save card collection");
             return;
         }
 
@@ -1570,18 +1448,15 @@ public class PlayFabBackendManager : MonoBehaviour
             dataApi.SetObjects(request,
                 result =>
                 {
-                    Debug.Log("[PlayFab] Card collection saved successfully");
                     onComplete?.Invoke();
                 },
                 error =>
                 {
-                    Debug.LogError($"[PlayFab] Failed to save card collection: {error.ErrorMessage}");
                 }
             );
         }
         catch (Exception ex)
         {
-            Debug.LogError($"[PlayFab] Error saving card collection: {ex.Message}");
         }
     }
 
@@ -1729,7 +1604,6 @@ public class PlayFabBackendManager : MonoBehaviour
     {
         if (!IsLoggedIn())
         {
-            Debug.LogError("[Matchmaking] Not logged in");
             onError?.Invoke("Not logged in");
             return;
         }
@@ -1737,12 +1611,10 @@ public class PlayFabBackendManager : MonoBehaviour
         ExecuteCloudScript("startMatchmaking", new Dictionary<string, object>(),
             result =>
             {
-                Debug.Log("[Matchmaking] Matchmaking started");
                 var resultDict = result as Dictionary<string, object>;
                 if (resultDict != null && resultDict.ContainsKey("matchId"))
                 {
                     string matchId = resultDict["matchId"].ToString();
-                    Debug.Log($"[Matchmaking] Match ID: {matchId}");
                     onMatchStarted?.Invoke(null);
 
                     // Start polling for match status
@@ -1750,7 +1622,6 @@ public class PlayFabBackendManager : MonoBehaviour
                 }
                 else
                 {
-                    Debug.Log("[Matchmaking] Queued, waiting for opponent...");
                     onMatchStarted?.Invoke(null);
 
                     // Start polling for match status
@@ -1759,7 +1630,6 @@ public class PlayFabBackendManager : MonoBehaviour
             },
             errorMsg =>
             {
-                Debug.LogError($"[Matchmaking] Failed to start matchmaking: {errorMsg}");
                 onError?.Invoke(errorMsg);
             }
         );
@@ -1806,7 +1676,6 @@ public class PlayFabBackendManager : MonoBehaviour
 
                     // Convert result to string then parse JSON
                     string resultStr = result?.ToString() ?? "";
-                    Debug.Log($"[Matchmaking] Raw response: {resultStr}");
 
                     Dictionary<string, object> resultDict = null;
 
@@ -1830,17 +1699,13 @@ public class PlayFabBackendManager : MonoBehaviour
                     }
                     catch (System.Exception ex)
                     {
-                        Debug.LogError($"[Matchmaking] Failed to parse response: {ex.Message}");
                         return;
                     }
 
                     if (resultDict == null)
                     {
-                        Debug.LogError("[Matchmaking] Could not parse response");
                         return;
                     }
-
-                    Debug.Log($"[Matchmaking] Parsed result with {resultDict.Count} keys");
 
                     // Check if matched
                     bool matched = SafeGetBoolFromDict(resultDict, "matched");
@@ -1848,7 +1713,6 @@ public class PlayFabBackendManager : MonoBehaviour
                     {
                         if (resultDict.ContainsKey("message"))
                         {
-                            Debug.Log($"[Matchmaking] {resultDict["message"]}");
                         }
                         return;
                     }
@@ -1876,8 +1740,6 @@ public class PlayFabBackendManager : MonoBehaviour
                                 Status = "ready"
                             };
 
-                            Debug.Log($"[Matchmaking] Match ready! Server: {serverIp}:{serverPort}");
-
                             // Stop polling
                             StopMatchPolling();
 
@@ -1886,25 +1748,20 @@ public class PlayFabBackendManager : MonoBehaviour
                         }
                         else
                         {
-                            Debug.LogError("[Matchmaking] Match ready but missing connection details");
                             OnMatchError?.Invoke("Missing server connection details");
                             StopMatchPolling();
                         }
                     }
                     else
                     {
-                        Debug.Log($"[Matchmaking] Server status: {status}");
                     }
                 },
                 errorMsg =>
                 {
-                    Debug.LogWarning($"[Matchmaking] Error polling match status: {errorMsg}");
                     // Continue polling even on error
                 }
             );
         }
-
-        Debug.Log("[Matchmaking] Stopped polling for match status");
     }
 
     /// <summary>
@@ -1917,13 +1774,11 @@ public class PlayFabBackendManager : MonoBehaviour
         ExecuteCloudScript("cancelMatchmaking", new Dictionary<string, object>(),
             result =>
             {
-                Debug.Log("[Matchmaking] Cancelled matchmaking");
                 CurrentMatchData = null;
                 onCancelled?.Invoke();
             },
             errorMsg =>
             {
-                Debug.LogError($"[Matchmaking] Failed to cancel: {errorMsg}");
             }
         );
     }
@@ -1933,26 +1788,19 @@ public class PlayFabBackendManager : MonoBehaviour
     /// </summary>
     private System.Collections.IEnumerator ConnectToGameServer(string serverIp, int serverPort)
     {
-        Debug.Log($"[Matchmaking] Attempting to connect to {serverIp}:{serverPort}");
-
         yield return new WaitForSeconds(0.5f);
 
         if (NetworkManager.Singleton == null)
         {
-            Debug.LogError("[Matchmaking] NetworkManager not found!");
             OnMatchError?.Invoke("NetworkManager not available");
             yield break;
         }
-
-        Debug.Log("[Matchmaking] Delegating to HeadlessServer.ClientConnectionRoutine()");
 
         // Set the connection config with server details
         HeadlessServer.SetClientConnectionConfig(serverIp, (ushort)serverPort);
 
         // Start the HeadlessServer client connection
         yield return HeadlessServer.Instance.StartCoroutine(HeadlessServer.Instance.GetClientConnectionRoutine());
-
-        Debug.Log("[Matchmaking] HeadlessServer client connection complete");
 
         // Only fire OnMatchFound AFTER successful connection
         OnMatchFound?.Invoke();

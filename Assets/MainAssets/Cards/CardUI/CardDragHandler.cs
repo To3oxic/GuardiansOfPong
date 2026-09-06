@@ -34,7 +34,6 @@ public class CardDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
 
     public void Initialize(CardData data)
     {
-
         PaddleController[] allPaddles = FindObjectsByType<PaddleController>(FindObjectsSortMode.None);
         foreach (var paddle in allPaddles)
         {
@@ -106,10 +105,7 @@ public class CardDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
     public void OnDrag(PointerEventData eventData)
     {
         bool isInValidPlayArea = false;
-        Debug.Log("[CardDragHandler] OnDrag called");
         if (!isDragging) return;
-
-
 
         // Get world position from screen point
         Ray ray = mainCamera.ScreenPointToRay(eventData.position);
@@ -173,7 +169,6 @@ public class CardDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
 
             if (isValidPlacement)
             {
-
                 previewColor = validPlacementColor;
                 previewColor.a = 0.4f;
             }
@@ -237,11 +232,9 @@ public class CardDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
 
         // Hide the placement preview
         CardManager.Instance?.HidePlacementPreview();
-        Debug.Log("[CardDragHandler] OnEndDrag called");
 
         // Calculate drag distance
         float dragDistance = Vector2.Distance(dragStartPosition, eventData.position);
-        Debug.Log($"[CardDragHandler] Drag distance: {dragDistance}, Threshold: {dragActivationThreshold}");
 
         // Reset card position and opacity
         if (cardRectTransform != null)
@@ -263,7 +256,6 @@ public class CardDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
                 CardHolderUI cardHolder = GetComponent<CardHolderUI>();
                 if (cardHolder != null && CardManager.Instance != null)
                 {
-                    Debug.Log("[CardDragHandler] Valid placement confirmed, applying card effect");
                     // Apply the card effect directly with the calculated position and direction
                     Vector3 position = lastValidPosition;
                     Vector3 direction = lastValidDirection;
@@ -271,7 +263,6 @@ public class CardDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
                     // Check mana cost before applying
                     if (localPaddle != null && localPaddle.currentMana.Value >= (int)cardData.manaCost)
                     {
-                        Debug.Log("[CardDragHandler] Sufficient mana, applying card effect");
                         GameManager.Instance.ApplyCardEffectServerRpc(cardData.cardName, NetworkManager.Singleton.LocalClientId, position, direction);
                         localPaddle.ModifyManaServerRpc(-(int)cardData.manaCost);
 
@@ -280,7 +271,6 @@ public class CardDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
                     }
                     else
                     {
-                        Debug.LogWarning("[CardDragHandler] Insufficient mana or no local paddle found");
                     }
                 }
             }
@@ -290,17 +280,14 @@ public class CardDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         {
             if (dragDistance >= dragActivationThreshold)
             {
-                Debug.Log($"[CardDragHandler] Non-placement card dragged far enough ({dragDistance}px), activating card");
                 CardHolderUI cardHolder = GetComponent<CardHolderUI>();
                 if (cardHolder != null && CardManager.Instance != null)
                 {
-                    Debug.Log($"[CardDragHandler] Calling OnCardPlayed for {cardData.cardName}");
                     CardManager.Instance.OnCardPlayed(cardData, cardHolder);
                 }
             }
             else
             {
-                Debug.Log($"[CardDragHandler] Card dragged not far enough ({dragDistance}px < {dragActivationThreshold}px), card cancelled");
             }
         }
 
@@ -310,23 +297,18 @@ public class CardDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
 
     public void OnPointerClick(PointerEventData eventData)
     {
-        Debug.Log($"[CardDragHandler] OnPointerClick called - Card: {cardData?.cardName ?? "NULL"}, RequiresPlacement: {cardEffect?.RequiresPlacement() ?? false}");
-
         // For non-placeable cards, activate immediately on click
         if (cardEffect != null && !cardEffect.RequiresPlacement())
         {
             CardHolderUI cardHolder = GetComponent<CardHolderUI>();
-            Debug.Log($"[CardDragHandler] Non-placement card detected, cardHolder: {cardHolder != null}, CardManager: {CardManager.Instance != null}");
 
             if (cardHolder != null && CardManager.Instance != null)
             {
-                Debug.Log($"[CardDragHandler] Calling OnCardPlayed for {cardData.cardName}");
                 CardManager.Instance.OnCardPlayed(cardData, cardHolder);
             }
         }
         else
         {
-            Debug.Log($"[CardDragHandler] Card requires placement or cardEffect is null, not calling OnCardPlayed");
         }
     }
 

@@ -71,11 +71,6 @@ public class LegendTowerController : NetworkBehaviour
             {
                 projController.InitializeWithTarget(target, damage, OwnerClientId);
             }
-            // Fallback for legacy LegendProjectile
-            else if (proj.TryGetComponent<LegendProjectile>(out var legendProj))
-            {
-                legendProj.Initialize(target, damage);
-            }
 
             proj.GetComponent<NetworkObject>().Spawn();
         }

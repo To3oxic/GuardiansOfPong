@@ -62,14 +62,11 @@ public class PaddleController : NetworkBehaviour, IHasHP
             if (!string.IsNullOrEmpty(_tempInitialStoneNameForServer))
             {
                 SelectedLegendStoneName.Value = _tempInitialStoneNameForServer;
-                Debug.Log($"[PaddleController:{NetworkObjectId}] OnNetworkSpawn (Server) - Successfully set SelectedLegendStoneName from _tempInitialStoneNameForServer: '{_tempInitialStoneNameForServer}'. NV is now: '{SelectedLegendStoneName.Value}'");
             }
             else
             {
-                Debug.LogWarning($"[PaddleController:{NetworkObjectId}] OnNetworkSpawn (Server) - _tempInitialStoneNameForServer was empty or null when attempting to set NetworkVariable.");
             }
 
-            Debug.Log($"[PaddleController:{NetworkObjectId}] OnNetworkSpawn (Server). SelectedLegendStoneName: '{SelectedLegendStoneName.Value}'");
             currentHP.Value = maxHP;
             currentMana.Value = 4;
 
@@ -138,8 +135,6 @@ public class PaddleController : NetworkBehaviour, IHasHP
 
     private void OnManaChanged(float previousValue, float newValue)
     {
-        Debug.Log($"[PaddleController] Mana changed from {previousValue} to {newValue} on {(IsServer ? "Server" : "Client")} for paddle {gameObject.name}");
-
         // This callback will be triggered on all clients when mana changes
         // The GameManager's UpdatePlayerStatsUI will handle the UI update in its Update loop
     }
@@ -289,11 +284,9 @@ public class PaddleController : NetworkBehaviour, IHasHP
         {
             speed += stoneData.paddleSpeedBonus;
             // Apply other stats from stoneData, e.g., damageResistance
-            Debug.Log($"[PaddleController] Applied buff from LegendStone: '{stoneData.stoneName}'. New speed: {speed}");
         }
         else
         {
-            Debug.LogWarning($"[PaddleController] ApplyLegendStoneBuff: Could not get LegendStoneData from DeckManager. Is CurrentDeck populated?");
         }
     }
 
@@ -302,7 +295,6 @@ public class PaddleController : NetworkBehaviour, IHasHP
         var legend = DeckManager.Instance?.GetSelectedLegend();
         if (legend != null)
         {
-            Debug.Log($"[PaddleController] Applying casting legend buffs. Damage Boost: {legend.damageBoostPercent}, Mana Cost Reduction: {legend.manaCostReduction}");
             // Future hooks could apply these to a player stats system
         }
     }
@@ -330,8 +322,6 @@ public class PaddleController : NetworkBehaviour, IHasHP
             // You may need to adjust these dimensions based on your paddle mesh
             boxCollider.size = new Vector3(paddleLength, 0.5f, 0.2f);
         }
-
-        Debug.Log($"[PaddleController] Physics setup complete - Kinematic: {paddleRigidbody.isKinematic}");
     }
 
     private void Update()
@@ -372,16 +362,13 @@ public class PaddleController : NetworkBehaviour, IHasHP
                 {
                     float newMana = Mathf.Min(currentMana.Value + manaRegenRate, maxMana);
                     currentMana.Value = newMana;
-                    Debug.Log($"[PaddleController] {gameObject.name} mana regenerated to {currentMana.Value}/{maxMana}");
                 }
             }
-
         }
 
         // Test mana consumption (remove this in production)
         if (IsOwner && Input.GetKeyDown(KeyCode.Space))
         {
-            Debug.Log($"[PaddleController] Testing mana consumption. Current mana: {currentMana.Value}");
             // This would be called when actually playing a card through the card system
         }
     }
@@ -432,11 +419,9 @@ public class PaddleController : NetworkBehaviour, IHasHP
 
         if (damage > 0)
         {
-            Debug.Log($"[PaddleController] {gameObject.name} (Owner: {OwnerClientId}) HP reduced by {damage}. New HP: {currentHP.Value}");
         }
         else if (damage < 0)
         {
-            Debug.Log($"[PaddleController] {gameObject.name} (Owner: {OwnerClientId}) HP healed by {-damage}. New HP: {currentHP.Value}");
         }
 
         // Check for 50% HP threshold crossing for legend stone transformation
@@ -445,7 +430,6 @@ public class PaddleController : NetworkBehaviour, IHasHP
 
         if (previousHpPercentage >= 0.5f && hpPercentage < 0.5f)
         {
-            Debug.Log($"[PaddleController] {gameObject.name} HP dropped below 50%! Server notifying GameManager about legend stone transformation.");
             // Server directly calls GameManager to handle transformation
             GameManager.Instance.HandleLegendStoneTransformation(OwnerClientId);
         }
@@ -457,7 +441,6 @@ public class PaddleController : NetworkBehaviour, IHasHP
 
         if (currentHP.Value <= 0 && previousHp > 0) // Ensure defeat is triggered only once
         {
-            Debug.Log($"[PaddleController] {gameObject.name} (Owner: {OwnerClientId}) HP reached 0. Triggering paddle defeat.");
             GameManager.Instance.TriggerPaddleDefeat(OwnerClientId); // Assuming TriggerPaddleDefeat handles despawn or game over
         }
     }
@@ -465,8 +448,6 @@ public class PaddleController : NetworkBehaviour, IHasHP
     [ClientRpc]
     private void OnHPChangedClientRpc(ulong paddleOwnerClientId, float newHP, float maxHP, float damageDealt)
     {
-        Debug.Log($"[PaddleController] HP Change RPC received - Owner: {paddleOwnerClientId}, HP: {newHP}/{maxHP}, Damage: {damageDealt}");
-
         // Notify GameManager about the HP change for UI updates
         GameManager gameManager = FindFirstObjectByType<GameManager>();
         if (gameManager != null)
@@ -522,13 +503,13 @@ public class PaddleController : NetworkBehaviour, IHasHP
         colorOverLifetime.enabled = true;
         Gradient grad = new Gradient();
         grad.SetKeys(
-            new GradientColorKey[] { 
-                new GradientColorKey(new Color(0.2f, 1.0f, 0.4f), 0.0f), 
-                new GradientColorKey(new Color(0.1f, 0.8f, 0.2f), 1.0f) 
+            new GradientColorKey[] {
+                new GradientColorKey(new Color(0.2f, 1.0f, 0.4f), 0.0f),
+                new GradientColorKey(new Color(0.1f, 0.8f, 0.2f), 1.0f)
             },
-            new GradientAlphaKey[] { 
-                new GradientAlphaKey(1.0f, 0.0f), 
-                new GradientAlphaKey(0.0f, 1.0f) 
+            new GradientAlphaKey[] {
+                new GradientAlphaKey(1.0f, 0.0f),
+                new GradientAlphaKey(0.0f, 1.0f)
             }
         );
         colorOverLifetime.color = grad;
@@ -538,7 +519,7 @@ public class PaddleController : NetworkBehaviour, IHasHP
         if (psr != null)
         {
             psr.renderMode = ParticleSystemRenderMode.VerticalBillboard; // Perfect for vertical rising lines
-            
+
             Shader particleShader = Shader.Find("Sprites/Default") ?? Shader.Find("Particles/Standard Unlit") ?? Shader.Find("Legacy Shaders/Particles/Alpha Blended");
             if (particleShader != null)
             {

@@ -154,7 +154,6 @@ public abstract class BaseBuildingController : NetworkBehaviour, IPlaceable, IHa
             hpBarSlider = hpBarCanvasInstance.GetComponentInChildren<CustomSlider>();
             if (hpBarSlider == null)
             {
-                Debug.LogError($"[{GetType().Name}] HP bar canvas prefab doesn't have a Slider component!");
             }
             else
             {
@@ -226,7 +225,6 @@ public abstract class BaseBuildingController : NetworkBehaviour, IPlaceable, IHa
         yield return new WaitForSeconds(0.5f);
 
         // Animation complete
-        Debug.Log($"[{GetType().Name}] Spawn animation complete for building ID: {NetworkObjectId}");
         isSpawningAnimation = false;
     }
 
@@ -383,7 +381,6 @@ public abstract class BaseBuildingController : NetworkBehaviour, IPlaceable, IHa
 
         int newHP = currentHP.Value - amount;
         currentHP.Value = newHP;
-        Debug.Log($"[{GetType().Name}] (ID: {NetworkObjectId}) Took {amount} damage, HP is now {currentHP.Value}");
 
         if (newHP <= 0)
         {
@@ -443,7 +440,6 @@ public abstract class BaseBuildingController : NetworkBehaviour, IPlaceable, IHa
 
     protected virtual System.Collections.IEnumerator HandleDeath()
     {
-        Debug.Log($"[{GetType().Name}] (ID: {NetworkObjectId}) Starting death sequence.");
         currentTarget = null;
 
         yield return new WaitForSeconds(2f);
@@ -466,7 +462,6 @@ public abstract class BaseBuildingController : NetworkBehaviour, IPlaceable, IHa
             return;
         }
 
-        Debug.Log($"[{GetType().Name}] Ability called (override ApplyAbility to implement)");
         // Child classes should override this to implement specific building abilities
     }
 

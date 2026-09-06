@@ -41,8 +41,6 @@ public class ManaVisualizer : MonoBehaviour
                 manaCells[i].next = manaCells[i + 1];
             }
         }
-
-        Debug.Log($"[ManaVisualizer] Initialized {manaCells.Count} mana cells");
     }
 
     /// <summary>
@@ -51,7 +49,6 @@ public class ManaVisualizer : MonoBehaviour
     public void UpdateManaDisplay(float currentMana)
     {
         // Calculate how many cells should be filled
-
 
         // First, empty all cells
         foreach (ManaCell cell in manaCells)
@@ -100,15 +97,12 @@ public class ManaVisualizer : MonoBehaviour
             {
                 // Found an empty cell, animate it
                 currentCell.PlayFillAnimation();
-                Debug.Log($"[ManaVisualizer] Animating cell");
                 return;
             }
 
             // Move to the next cell in the linked list
             currentCell = currentCell.next;
         }
-
-        Debug.Log("[ManaVisualizer] All cells are filled - nothing to animate");
     }
 
     /// <summary>

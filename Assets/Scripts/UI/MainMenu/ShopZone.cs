@@ -11,12 +11,8 @@ public class ShopZone : MonoBehaviour
     [SerializeField] private TextMeshProUGUI currencyDisplay;
     [SerializeField] private int playerCoins = 500; // TODO: Load from PlayerData
 
-
-
     public void Initialize()
     {
-        Debug.Log("[ShopZone] Initializing...");
-
         // Display player's current currency
         UpdateCurrencyDisplay();
 
@@ -38,8 +34,6 @@ public class ShopZone : MonoBehaviour
         // TODO: Fetch shop items from backend/database
         // For now, create placeholder items
 
-        Debug.Log("[ShopZone] Creating shop items grid...");
-
         // Example:
         // ShopItem[] items = GetShopItemsFromServer();
         // displayedItems = new ShopItem[items.Length];
@@ -52,6 +46,4 @@ public class ShopZone : MonoBehaviour
         //     displayedItems[i] = item;
         // }
     }
-
-
 }

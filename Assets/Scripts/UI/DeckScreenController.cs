@@ -115,14 +115,12 @@ public class DeckScreenController : MonoBehaviour
             currentSelectedCards = new List<CardData>(savedDeck.selectedCards ?? new List<CardData>());
             currentSelectedGuardian = savedDeck.selectedCastingLegend;
             currentSelectedLegendStone = savedDeck.selectedLegendStone;
-            Debug.Log($"[DeckScreen] Loaded deck. Cards: {currentSelectedCards.Count}, Guardian: {currentSelectedGuardian?.legendName}, Stone: {currentSelectedLegendStone?.stoneName}");
         }
         else
         {
             currentSelectedCards.Clear();
             currentSelectedGuardian = null;
             currentSelectedLegendStone = null;
-            Debug.Log("[DeckScreen] No saved deck. Starting fresh.");
         }
         RefreshAllSelectedDisplays();
         PopulateAllBrowseLists();
@@ -139,7 +137,6 @@ public class DeckScreenController : MonoBehaviour
     {
         if (selectedCardsContainer == null || selectedCardDisplayPrefab == null)
         {
-            Debug.LogError("[DeckScreen] selectedCardsContainer or selectedCardDisplayPrefab is not assigned!");
             return;
         }
 
@@ -161,7 +158,6 @@ public class DeckScreenController : MonoBehaviour
             }
             else
             {
-                Debug.LogError($"[DeckScreen] selectedCardDisplayPrefab is missing SelectedCardDisplayItem script on its root!");
             }
         }
     }
@@ -244,7 +240,6 @@ public class DeckScreenController : MonoBehaviour
     {
         if (container == null || prefab == null || items == null)
         {
-            Debug.LogWarning("[DeckScreen] Missing references for populating a browse list.");
             return;
         }
         ClearListContainer(container);
@@ -263,7 +258,6 @@ public class DeckScreenController : MonoBehaviour
             else if (item is LegendStoneData stone) { displayName = stone.id; displayIcon = stone.stoneIcon; }
             else
             {
-                Debug.LogWarning($"[DeckScreen] PopulateBrowseList encountered an unknown item type: {item.GetType().Name}");
                 Destroy(listItemInstance);
                 continue;
             }
@@ -284,7 +278,6 @@ public class DeckScreenController : MonoBehaviour
             }
             else
             {
-                Debug.LogWarning($"[DeckScreen] Prefab {prefab.name} for {typeof(T).Name} is missing a Button component at its root.");
             }
         }
     }
@@ -405,7 +398,6 @@ public class DeckScreenController : MonoBehaviour
         PlayerDeckData currentDeckData = DeckManager.Instance?.GetSelectedDeck();
         if (currentDeckData == null)
         {
-            Debug.LogWarning("[DeckScreen] DeckManager.GetSelectedDeck() returned null. Creating a temporary PlayerDeckData.");
             currentDeckData = ScriptableObject.CreateInstance<PlayerDeckData>();
         }
 
@@ -415,7 +407,6 @@ public class DeckScreenController : MonoBehaviour
 
         DeckManager.Instance?.LoadDeck(currentDeckData);
 
-        Debug.Log($"[DeckScreen] Cards confirmed and saved to DeckManager. Count: {currentSelectedCards.Count}");
         ShowFeedback($"Selected cards saved! ({currentSelectedCards.Count})", false);
 
         UIManager.Instance.ShowScreen(MainMenuScreenName);
@@ -424,7 +415,6 @@ public class DeckScreenController : MonoBehaviour
     void OnBackClicked()
     {
         ClearFeedbackText();
-        Debug.Log("[DeckScreen] Back button clicked. Returning to Main Menu.");
         UIManager.Instance.ShowScreen(MainMenuScreenName);
     }
 }

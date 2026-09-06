@@ -27,9 +27,6 @@ public class ScreenShakeManager : MonoBehaviour
             {
                 mainCamera = GetComponent<Camera>();
             }
-
-
-
         }
         else
         {
@@ -94,7 +91,6 @@ public class ScreenShakeManager : MonoBehaviour
         {
             yield return new WaitForSeconds(1f);
             ShakeScreen(intensity: 0.5f, duration: 0.3f, frequency: 10f);
-            Debug.Log("[ScreenShakeManager] Test shake triggered");
         }
     }
 }

@@ -51,26 +51,18 @@ public class NetworkUI : MonoBehaviour
 
     void Awake()
     {
-        Debug.Log("[NetworkUI] Awake called");
-
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
         // Parse command line arguments for player IDs
-        Debug.Log("[NetworkUI] Parsing command-line arguments in Awake");
         ParseCommandLineArguments();
-        Debug.Log($"[NetworkUI] After parse: player1Id={_player1Id}, player2Id={_player2Id}");
     }
 
     void Start()
     {
-        Debug.Log("[NetworkUI] Start() called");
-        Debug.Log($"[NetworkUI] NetworkManager.Singleton: {NetworkManager.Singleton}");
-
         if (NetworkManager.Singleton == null)
         {
-            Debug.LogError("[NetworkUI] NetworkManager.Singleton is null! Returning.");
             return;
         }
 
@@ -95,32 +87,24 @@ public class NetworkUI : MonoBehaviour
         // NGO scene event (only valid when scene management enabled)
         if (nm.NetworkConfig != null && nm.NetworkConfig.EnableSceneManagement && nm.SceneManager != null)
         {
-            Debug.Log("[NetworkUI] Using NGO scene management events");
             nm.SceneManager.OnLoadEventCompleted += OnLoadEventCompleted;
         }
         else
         {
-            Debug.Log("[NetworkUI] Using Unity scene loading events (fallback)");
             SceneManager.sceneLoaded += OnUnitySceneLoaded;
         }
 
         if (clientButton) clientButton.onClick.AddListener(() => StartCoroutine(StartClientAndInitiateCo()));
 
-        Debug.Log($"[NetworkUI] About to check for headless mode");
-        Debug.Log($"[NetworkUI] Application.isBatchMode: {Application.isBatchMode}");
-        Debug.Log($"[NetworkUI] CommandLineArgs: {string.Join(" ", System.Environment.GetCommandLineArgs())}");
-
         // Don't start server here - let HeadlessServer handle it
         // HeadlessServer.cs will handle the -server flag
         if (System.Array.Exists(System.Environment.GetCommandLineArgs(), element => element == "-server"))
         {
-            Debug.Log("[NetworkUI] Server mode detected - HeadlessServer will handle initialization");
             // Hide any UI panels for headless
             if (networkButtonsPanel) networkButtonsPanel.SetActive(false);
         }
         else
         {
-            Debug.Log("[NetworkUI] Not in server mode - showing client UI");
             // Show UI for client mode
             if (networkButtonsPanel != null && !autoQuickMatch)
             {
@@ -135,7 +119,6 @@ public class NetworkUI : MonoBehaviour
         if (nm != null)
         {
             nm.OnClientConnectedCallback -= OnClientConnectedToServer;
-
 
             if (nm.SceneManager != null)
                 nm.SceneManager.OnLoadEventCompleted -= OnLoadEventCompleted;
@@ -175,8 +158,6 @@ public class NetworkUI : MonoBehaviour
         if (_quickMatchCo != null) StopCoroutine(_quickMatchCo);
         _quickMatchCo = StartCoroutine(QuickMatchFlow());
     }
-
-
 
     // Called by MainMenuController to start a dedicated server
     public void StartDedicatedServer()
@@ -257,34 +238,24 @@ public class NetworkUI : MonoBehaviour
 
     private IEnumerator StartDedicatedServerRoutine()
     {
-        Debug.Log("[NetworkUI] StartDedicatedServerRoutine START");
-
         yield return EnsureStopped();
-
-        Debug.Log("[NetworkUI] After EnsureStopped");
 
         // Configure transport to bind on all interfaces
         ConfigureTransport("0.0.0.0", port);
-
-        Debug.Log("[NetworkUI] About to call StartServer()");
 
         // Start server-only (not host, just pure server)
         bool serverStarted = false;
         try
         {
             serverStarted = NetworkManager.Singleton.StartServer();
-            Debug.Log($"[NetworkUI] StartServer() returned: {serverStarted}");
         }
         catch (System.Exception e)
         {
-            Debug.LogError($"[NetworkUI] Exception calling StartServer(): {e}");
             yield break;
         }
 
         if (serverStarted)
         {
-            Debug.Log("[NetworkUI] Dedicated server started successfully");
-
             // Register server message handlers
             RegisterServerMessageHandlers();
 
@@ -296,35 +267,24 @@ public class NetworkUI : MonoBehaviour
             _isMatching = false;
 
             // Parse command-line arguments for player IDs
-            Debug.Log("[NetworkUI] Parsing command-line arguments for player IDs");
             ParseCommandLineArguments();
-
-            Debug.Log($"[NetworkUI] Parsed: player1Id={_player1Id}, player2Id={_player2Id}");
 
             // Don't fetch decks here - wait for clients to connect first
             // They will be fetched in OnClientConnectedToServer when both clients are connected
-            Debug.Log("[NetworkUI] Server ready, waiting for clients to connect...");
         }
         else
         {
-            Debug.LogError("[NetworkUI] Failed to start dedicated server");
         }
 
         // Hide network buttons panel if showing
         if (networkButtonsPanel) networkButtonsPanel.SetActive(false);
-
-        Debug.Log("[NetworkUI] StartDedicatedServerRoutine COMPLETE");
     }
-
-
 
     private IEnumerator EnsureStopped()
     {
         var nm = NetworkManager.Singleton;
         if (nm != null && nm.IsListening)
         {
-
-
             nm.Shutdown();
         }
 
@@ -350,8 +310,6 @@ public class NetworkUI : MonoBehaviour
         // Increase buffer sizes to prevent packet overflow
         utp.MaxPacketQueueSize = 512;  // Increased from default 128
         utp.MaxPayloadSize = 6000;     // Increased payload size
-
-        Debug.Log($"[NetworkUI] Configured transport: {address}:{p}, MaxPacketQueueSize: {utp.MaxPacketQueueSize}");
     }
 
     private UnityTransport EnsureTransport()
@@ -363,7 +321,6 @@ public class NetworkUI : MonoBehaviour
         if (nm.gameObject.scene.name != "DontDestroyOnLoad")
         {
             DontDestroyOnLoad(nm.gameObject);
-            Debug.Log("[NetworkUI] Set NetworkManager to persist across scenes");
         }
 
         var utp = nm.GetComponent<UnityTransport>();
@@ -380,8 +337,6 @@ public class NetworkUI : MonoBehaviour
         return utp;
     }
 
-
-
     private IEnumerator StartClientAndInitiateCo()
     {
         yield return EnsureStopped();
@@ -389,8 +344,6 @@ public class NetworkUI : MonoBehaviour
         ConfigureTransport(hostAddress, port);
         if (!NetworkManager.Singleton.StartClient())
         {
-
-
             yield break;
         }
 
@@ -404,7 +357,6 @@ public class NetworkUI : MonoBehaviour
 
         if (clientId == nm.LocalClientId && nm.IsClient && !nm.IsServer)
         {
-
             StartCoroutine(SendDeckAfterHandshake());
             return;
         }
@@ -412,12 +364,9 @@ public class NetworkUI : MonoBehaviour
         // Server side: a client connected
         if (nm.IsServer && clientId != NetworkManager.ServerClientId)
         {
-            Debug.Log($"[NetworkUI] Client {clientId} connected. Connected count: {nm.ConnectedClientsIds.Count}");
-
             // Check if both players are now connected (server + 1 client = 2)
             if (nm.ConnectedClientsIds.Count >= 2 && !_decksLoadedFromBackend)
             {
-                Debug.Log("[NetworkUI] Both clients connected! Starting to fetch decks from backend...");
                 StartCoroutine(FetchPlayerDecksFromBackendWhenReady());
             }
         }
@@ -433,19 +382,15 @@ public class NetworkUI : MonoBehaviour
         // Verify we still have 2 connected clients
         if (nm.ConnectedClientsIds.Count < 2)
         {
-            Debug.LogWarning("[NetworkUI] Not enough clients connected anymore");
             yield break;
         }
 
         if (!string.IsNullOrEmpty(_player1Id) && !string.IsNullOrEmpty(_player2Id))
         {
-            Debug.Log($"[NetworkUI] Fetching decks from backend for players: {_player1Id}, {_player2Id}");
             yield return StartCoroutine(FetchPlayerDecksFromBackend());
-            Debug.Log("[NetworkUI] Deck fetching complete");
         }
         else
         {
-            Debug.Log("[NetworkUI] No player IDs from backend - waiting for client deck submissions");
         }
     }
 
@@ -463,7 +408,6 @@ public class NetworkUI : MonoBehaviour
         }
         else
         {
-
         }
     }
 
@@ -481,7 +425,6 @@ public class NetworkUI : MonoBehaviour
 
             SendDeckToServerViaMessage(_pendingDeckPayload);
         }
-
     }
 
     // CLIENT -> SERVER: send deck via named message (UTF8 bytes with explicit length)
@@ -490,7 +433,6 @@ public class NetworkUI : MonoBehaviour
         var nm = NetworkManager.Singleton;
         if (nm == null || nm.CustomMessagingManager == null)
         {
-
             return;
         }
 
@@ -503,7 +445,6 @@ public class NetworkUI : MonoBehaviour
             writer.WriteBytesSafe(bytes);
             nm.CustomMessagingManager.SendNamedMessage(DeckSubmitMsg, NetworkManager.ServerClientId, writer);
         }
-
     }
 
     // SERVER: receive deck from client (reads explicit length + UTF8 bytes)
@@ -513,14 +454,12 @@ public class NetworkUI : MonoBehaviour
 
         if (!reader.TryBeginRead(sizeof(int)))
         {
-
             return;
         }
 
         reader.ReadValueSafe(out int len);
         if (len <= 0 || !reader.TryBeginRead(len))
         {
-
             return;
         }
 
@@ -530,7 +469,6 @@ public class NetworkUI : MonoBehaviour
 
         var payload = JsonUtility.FromJson<DeckPayload>(json);
         TempPlayerDecks[senderClientId] = payload;
-
 
         EvaluateStartCondition("OnServerReceiveDeckMessage");
     }
@@ -557,7 +495,6 @@ public class NetworkUI : MonoBehaviour
                 }
             }
             haveEnoughPlayers = clientDecks >= 2;
-
         }
         else
         {
@@ -573,7 +510,6 @@ public class NetworkUI : MonoBehaviour
                 }
             }
             haveEnoughPlayers = haveHost && haveOther;
-
         }
 
         if (!haveEnoughPlayers) return;
@@ -584,7 +520,6 @@ public class NetworkUI : MonoBehaviour
         var activeScene = SceneManager.GetActiveScene().name;
         if (activeScene == gameSceneName)
         {
-
             StartMatchOnServer();
         }
         else
@@ -597,23 +532,19 @@ public class NetworkUI : MonoBehaviour
     private void LoadGameScene()
     {
         if (!NetworkManager.Singleton.IsServer) return;
-        Debug.Log($"[NetworkUI] LoadGameScene called - gameSceneName: {gameSceneName}");
 
         if (!NetworkManager.Singleton.NetworkConfig.EnableSceneManagement)
         {
-            Debug.LogError("[NetworkUI] Scene management is disabled in NetworkConfig!");
             _matchStartTriggered = false;
             return;
         }
 
         if (!IsSceneInBuild(gameSceneName))
         {
-            Debug.LogError($"[NetworkUI] Scene '{gameSceneName}' is not in build settings!");
             _matchStartTriggered = false;
             return;
         }
 
-        Debug.Log($"[NetworkUI] Loading scene: {gameSceneName}");
         NetworkManager.Singleton.SceneManager.LoadScene(gameSceneName, LoadSceneMode.Single);
     }
 
@@ -623,7 +554,6 @@ public class NetworkUI : MonoBehaviour
         if (!NetworkManager.Singleton.IsServer) return;
         if (sceneName != gameSceneName) return;
 
-        Debug.Log($"[NetworkUI] OnLoadEventCompleted: {sceneName}, clients completed: {clientsCompleted.Count}, timed out: {clientsTimedOut.Count}");
         StartMatchOnServer();
     }
 
@@ -633,7 +563,6 @@ public class NetworkUI : MonoBehaviour
         if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsServer) return;
         if (scene.name != gameSceneName) return;
 
-
         StartMatchOnServer();
     }
 
@@ -642,17 +571,13 @@ public class NetworkUI : MonoBehaviour
     {
         if (!NetworkManager.Singleton || !NetworkManager.Singleton.IsServer)
         {
-            Debug.LogError("[NetworkUI] StartMatchOnServer: NetworkManager not available or not server!");
             return;
         }
-        Debug.Log("[NetworkUI] StartMatchOnServer called, starting coroutine...");
         StartCoroutine(StartMatchServerRoutine());
     }
 
     private System.Collections.IEnumerator StartMatchServerRoutine()
     {
-        Debug.Log("[NetworkUI] StartMatchServerRoutine started - looking for GameManager...");
-
         // Wait for GameManager to exist and be network-spawned
         const float timeout = 5f;
         float t = 0f;
@@ -663,7 +588,6 @@ public class NetworkUI : MonoBehaviour
         {
             if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsServer)
             {
-                Debug.LogError("[NetworkUI] NetworkManager lost during routine!");
                 yield break;
             }
             else
@@ -671,27 +595,22 @@ public class NetworkUI : MonoBehaviour
                 gm = UnityEngine.Object.FindFirstObjectByType<GameManager>();
                 if (gm != null)
                 {
-                    Debug.Log($"[NetworkUI] Found GameManager: {gm.name}");
                     // If there is a NetworkObject, prefer to wait until spawned
                     var no = gm.GetComponent<Unity.Netcode.NetworkObject>();
                     if (no == null)
                     {
-                        Debug.Log("[NetworkUI] GameManager has no NetworkObject component - proceeding");
                         break;
                     }
                     else if (no.IsSpawned)
                     {
-                        Debug.Log("[NetworkUI] GameManager NetworkObject is spawned - proceeding");
                         break;
                     }
                     else
                     {
-                        Debug.Log($"[NetworkUI] Waiting for GameManager NetworkObject to spawn... (t={t:F2})");
                     }
                 }
                 else
                 {
-                    Debug.Log($"[NetworkUI] GameManager not found yet... (t={t:F2})");
                 }
             }
 
@@ -701,31 +620,22 @@ public class NetworkUI : MonoBehaviour
 
         if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsServer)
         {
-            Debug.LogError("[NetworkUI] NetworkManager lost after timeout!");
             yield break;
         }
 
         gm = gm ?? UnityEngine.Object.FindFirstObjectByType<GameManager>();
         if (gm == null)
         {
-            Debug.LogError("[NetworkUI] GameManager still not found after timeout - cannot start match!");
             yield break;
         }
-
-        Debug.Log($"[NetworkUI] GameManager found: {gm.name}, checking server status...");
 
         // Extra diagnostics to catch the "client ignored" case
         if (!gm.IsServer)
         {
-            Debug.LogError($"[NetworkUI] GameManager.IsServer = false! Cannot initialize match.");
             yield break;
         }
 
-
-
-        Debug.Log("[NetworkUI] Sending InitializeFromDecks and StartMatch messages to GameManager...");
         gm.SendMessage("InitializeFromDecks", TempPlayerDecks, SendMessageOptions.DontRequireReceiver);
-
     }
 
     private bool IsSceneInBuild(string nameOrPath)
@@ -743,8 +653,6 @@ public class NetworkUI : MonoBehaviour
         return false;
     }
 
-
-
     // Approve-all callback (prevents instant disconnects when Connection Approval is enabled)
     private void OnApprovalCheck(NetworkManager.ConnectionApprovalRequest request,
                                  NetworkManager.ConnectionApprovalResponse response)
@@ -752,7 +660,6 @@ public class NetworkUI : MonoBehaviour
         response.Approved = true;
         response.CreatePlayerObject = false; // we spawn our own objects
         response.Pending = false;
-
     }
 
     private void RegisterServerMessageHandlers()
@@ -765,7 +672,6 @@ public class NetworkUI : MonoBehaviour
             // Safe to unregister first in case it was already set
             nm.CustomMessagingManager.UnregisterNamedMessageHandler(DeckSubmitMsg);
             nm.CustomMessagingManager.RegisterNamedMessageHandler(DeckSubmitMsg, OnServerReceiveDeckMessage);
-
         }
     }
 
@@ -777,12 +683,10 @@ public class NetworkUI : MonoBehaviour
             if (arg.StartsWith("-player1Id="))
             {
                 _player1Id = arg.Substring("-player1Id=".Length);
-                Debug.Log($"[NetworkUI] Player 1 ID: {_player1Id}");
             }
             if (arg.StartsWith("-player2Id="))
             {
                 _player2Id = arg.Substring("-player2Id=".Length);
-                Debug.Log($"[NetworkUI] Player 2 ID: {_player2Id}");
             }
         }
     }
@@ -791,7 +695,6 @@ public class NetworkUI : MonoBehaviour
     {
         if (string.IsNullOrEmpty(_player1Id) || string.IsNullOrEmpty(_player2Id))
         {
-            Debug.LogError("[NetworkUI] Missing player IDs - cannot fetch decks");
             yield break;
         }
 
@@ -829,20 +732,16 @@ public class NetworkUI : MonoBehaviour
             {
                 // Player 1 (server/host) gets deck1
                 TempPlayerDecks[connectedIds[0]] = deck1;
-                Debug.Log($"[NetworkUI] Stored deck1 for client {connectedIds[0]} (host)");
 
                 // Player 2 (connected client) gets deck2
                 TempPlayerDecks[connectedIds[1]] = deck2;
-                Debug.Log($"[NetworkUI] Stored deck2 for client {connectedIds[1]} (client)");
             }
             else
             {
-                Debug.LogWarning($"[NetworkUI] Not enough connected clients ({connectedIds.Count}). Waiting for both players to connect.");
                 yield break;
             }
 
             _decksLoadedFromBackend = true;
-            Debug.Log("[NetworkUI] Successfully loaded both decks from backend");
 
             // Signal backend that server is ready
             yield return StartCoroutine(SignalServerReady());
@@ -852,14 +751,11 @@ public class NetworkUI : MonoBehaviour
         }
         else
         {
-            Debug.LogError("[NetworkUI] Failed to fetch one or both decks from backend");
         }
     }
 
     private IEnumerator SignalServerReady()
     {
-        Debug.Log("[NetworkUI] Signaling server ready to backend");
-
         string backendUrl = "http://localhost:8000";
         string url = $"{backendUrl}/api/matchmaking/server-ready/";
 
@@ -878,11 +774,9 @@ public class NetworkUI : MonoBehaviour
 
             if (request.result == UnityWebRequest.Result.Success)
             {
-                Debug.Log("[NetworkUI] Server ready signal sent successfully");
             }
             else
             {
-                Debug.LogError($"[NetworkUI] Failed to signal server ready: {request.error}");
             }
         }
     }
@@ -890,7 +784,6 @@ public class NetworkUI : MonoBehaviour
     private IEnumerator FetchDeckFromBackend(string playerId, System.Action<DeckPayload> onSuccess)
     {
         string url = $"{backendUrl}/api/players/{playerId}/active-deck/";
-        Debug.Log($"[NetworkUI] Fetching deck from: {url}");
 
         using (UnityWebRequest request = UnityWebRequest.Get(url))
         {
@@ -904,23 +797,18 @@ public class NetworkUI : MonoBehaviour
                 try
                 {
                     string json = request.downloadHandler.text;
-                    Debug.Log($"[NetworkUI] Deck response: {json.Substring(0, Mathf.Min(200, json.Length))}...");
                     var deck = JsonUtility.FromJson<DeckPayload>(json);
                     onSuccess?.Invoke(deck);
-                    Debug.Log($"[NetworkUI] Successfully fetched deck for player {playerId}");
                 }
                 catch (System.Exception e)
                 {
-                    Debug.LogError($"[NetworkUI] Failed to parse deck JSON for {playerId}: {e.Message}");
                     onSuccess?.Invoke(null);
                 }
             }
             else
             {
-                Debug.LogError($"[NetworkUI] HTTP error fetching deck for {playerId}: {request.error} (Status: {request.responseCode})");
                 if (!string.IsNullOrEmpty(request.downloadHandler?.text))
                 {
-                    Debug.LogError($"[NetworkUI] Response body: {request.downloadHandler.text}");
                 }
                 onSuccess?.Invoke(null);
             }

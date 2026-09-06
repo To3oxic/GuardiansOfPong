@@ -109,11 +109,9 @@ public class DeckMenuController : MonoBehaviour
 
         if (!valid)
         {
-            Debug.LogWarning("[DeckMenu] Selection invalid. Pick 6–8 cards, 1 legend, 1 stone.");
             return;
         }
 
-        Debug.Log("[DeckMenu] Deck selection saved.");
         // Optionally mirror to DeckManager here if desired.
     }
 }

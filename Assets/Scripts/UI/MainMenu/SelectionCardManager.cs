@@ -50,7 +50,6 @@ public class SelectionCardManager : MonoBehaviour
         }
 
         // Subscribe to PlayerStates events as early as possible (before they fire)
-
     }
 
     private void OnEnable()
@@ -58,12 +57,9 @@ public class SelectionCardManager : MonoBehaviour
         // Reset deck load flag when scene is enabled
         _deckLoadedOnce = false;
 
-        Debug.Log("[SelectionCardManager] OnEnable called");
-
         // Check if data is already loaded (happens on initial login before this scene loads)
         if (PlayerStates.Instance != null && PlayerStates.Instance.IsLoginComplete() && PlayerStates.Instance.IsActiveDeckLoaded())
         {
-            Debug.Log("[SelectionCardManager] Data already loaded during Awake, populating deck now");
             PopulateDeckFromPlayerStates();
         }
     }
@@ -74,8 +70,6 @@ public class SelectionCardManager : MonoBehaviour
         if (PlayerStates.Instance != null)
         {
             PlayerStates.Instance.OnPlayerDataLoaded -= PopulateDeckFromPlayerStates;
-
-            Debug.Log("[SelectionCardManager] Unsubscribed from PlayerStates events");
         }
     }
 
@@ -91,35 +85,27 @@ public class SelectionCardManager : MonoBehaviour
     {
         if (PlayerStates.Instance == null)
         {
-            Debug.LogError("[SelectionCardManager] PlayerStates is null!");
             return;
         }
-
-        Debug.Log($"[SelectionCardManager] PopulateDeckFromPlayerStates called. IsActiveDeckLoaded: {PlayerStates.Instance.IsActiveDeckLoaded()}, _deckLoadedOnce: {_deckLoadedOnce}");
 
         if (PlayerStates.Instance.IsActiveDeckLoaded())
         {
             PlayFabBackendManager.SavedDeck? activeDeck = PlayerStates.Instance.ActiveDeck;
-            Debug.Log($"[SelectionCardManager] Active deck value: {(activeDeck != null ? activeDeck.Value.DeckName : "null")}");
 
             if (activeDeck != null && !_deckLoadedOnce)
             {
                 _deckLoadedOnce = true;
-                Debug.Log($"[SelectionCardManager] PopulateDeckFromPlayerStates: Found active deck '{activeDeck.Value.DeckName}' with {activeDeck.Value.Cards.Count} cards, waiting for card holders");
                 StartCoroutine(WaitForCardHoldersAndSelect(activeDeck.Value));
             }
             else if (activeDeck == null)
             {
-                Debug.LogWarning("[SelectionCardManager] Active deck is null even though IsActiveDeckLoaded returned true!");
             }
             else if (_deckLoadedOnce)
             {
-                Debug.Log("[SelectionCardManager] Deck already loaded once, skipping");
             }
         }
         else
         {
-            Debug.LogWarning("[SelectionCardManager] Active deck not loaded yet!");
         }
     }
 
@@ -134,18 +120,14 @@ public class SelectionCardManager : MonoBehaviour
 
         while (cardHolderRegistry.Count == 0 && elapsed < timeout)
         {
-            Debug.Log($"[SelectionCardManager] Waiting for card holders to populate... ({elapsed:F1}s)");
             yield return new WaitForSeconds(0.5f);
             elapsed += 0.5f;
         }
 
         if (cardHolderRegistry.Count == 0)
         {
-            Debug.LogError("[SelectionCardManager] Timeout waiting for card holders! Registry is still empty");
             yield break;
         }
-
-        Debug.Log($"[SelectionCardManager] Card holders populated! Registry has {cardHolderRegistry.Count} entries. Starting selection...");
 
         // Now select the deck cards
         yield return SelectDeckCardsAfterDelay(activeDeck, 0.2f);
@@ -161,11 +143,8 @@ public class SelectionCardManager : MonoBehaviour
         // Verify PlayerStates is ready
         if (!PlayerStates.Instance.IsLoginComplete())
         {
-            Debug.Log("[SelectionCardManager] PlayerStates login not yet complete, waiting...");
             yield return new WaitForSeconds(0.5f);
         }
-
-        Debug.Log($"[SelectionCardManager] Starting deck auto-selection after {delaySeconds}s delay");
 
         // Auto-select all cards from the active deck
         ClearAllSelections();
@@ -173,16 +152,12 @@ public class SelectionCardManager : MonoBehaviour
         int selectedCount = 0;
         foreach (var cardDto in activeDeck.Cards)
         {
-            Debug.Log($"[SelectionCardManager] Attempting to select card: {cardDto.id} (type: {cardDto.card_type})");
-
             // Find and select the card based on its ID and type
             if (SelectCardByIdAndType(cardDto.id, cardDto.card_type))
             {
                 selectedCount++;
             }
         }
-
-        Debug.Log($"[SelectionCardManager] Active deck auto-loaded: selected {selectedCount}/{activeDeck.Cards.Count} cards");
     }
 
     /// <summary>
@@ -222,8 +197,6 @@ public class SelectionCardManager : MonoBehaviour
     /// </summary>
     private bool SelectCardByIdAndType(string cardId, string cardType)
     {
-        Debug.Log($"[SelectionCardManager] Looking for card: {cardId} of type: {cardType}, registry has {cardHolderRegistry.Count} entries");
-
         // Search through all card holders to find the one matching this ID and type
         foreach (var kvp in cardHolderRegistry)
         {
@@ -232,19 +205,14 @@ public class SelectionCardManager : MonoBehaviour
 
             string holderId = GetCardIdFromHolder(holder);
 
-
-            Debug.Log($"[SelectionCardManager]   Comparing: {holderId} vs {cardId}");
-
             if (holderId.Equals(cardId, System.StringComparison.OrdinalIgnoreCase))
             {
-                Debug.Log($"[SelectionCardManager] ✓ Found matching holder for {cardId}, selecting it");
                 object cardData = holder.GetPublicCardData();
                 SelectCard(holder, cardData);
                 return true;
             }
         }
 
-        Debug.LogWarning($"[SelectionCardManager] ✗ Could not find card holder for {cardId} of type {cardType}. Searched {cardHolderRegistry.Count} holders");
         return false;
     }
 
@@ -271,17 +239,13 @@ public class SelectionCardManager : MonoBehaviour
         string cardType = holder.GetCardType(); // Get type from holder instead of cardData
         string cardId = GetCardIdFromType(holder, cardType); // Use holder's type to get ID
 
-        Debug.Log($"[SelectionCardManager] SelectCard called - Type: {cardType}, ID: {cardId}, CardData: {cardData?.GetType().Name ?? "null"}");
-
         if (string.IsNullOrEmpty(cardId) || cardId == "Unknown")
         {
-            Debug.LogError($"[SelectionCardManager] Could not get valid ID for card! Type: {cardType}, CardData: {cardData}");
             return false;
         }
 
         if (selectedCards.ContainsKey(cardId))
         {
-            Debug.LogWarning($"[SelectionCardManager] Card {cardId} is already selected!");
             return false;
         }
 
@@ -290,7 +254,6 @@ public class SelectionCardManager : MonoBehaviour
         {
             if (guardianSlot != null)
             {
-                Debug.LogWarning($"[SelectionCardManager] Guardian slot already filled!");
                 return false;
             }
             guardianSlot = holder;
@@ -301,14 +264,12 @@ public class SelectionCardManager : MonoBehaviour
                 cardCopies[holder] = guardianCopy;
                 holder.SetCardGreyedOut(true);
             }
-            Debug.Log($"[SelectionCardManager] Guardian selected: {cardId}");
             return true;
         }
         else if (cardType == "legendstone")
         {
             if (legendStoneSlot != null)
             {
-                Debug.LogWarning($"[SelectionCardManager] Legend Stone slot already filled!");
                 return false;
             }
             legendStoneSlot = holder;
@@ -319,7 +280,6 @@ public class SelectionCardManager : MonoBehaviour
                 cardCopies[holder] = legendStoneCopy;
                 holder.SetCardGreyedOut(true);
             }
-            Debug.Log($"[SelectionCardManager] Legend Stone selected: {cardId}");
             return true;
         }
 
@@ -331,7 +291,6 @@ public class SelectionCardManager : MonoBehaviour
 
             if (totalCards >= maxCards)
             {
-                Debug.LogWarning($"[SelectionCardManager] All card slots are full! (Max {maxCards})");
                 return false;
             }
 
@@ -339,7 +298,6 @@ public class SelectionCardManager : MonoBehaviour
             // Grey out the card in all-cards container
             holder.SetCardGreyedOut(true);
             AddCardToRow(holder); // Add copy to selected rows
-            Debug.Log($"[SelectionCardManager] Card selected: {cardId}. Regular cards: {selectedCards.Count}/{maxCards}");
             return true;
         }
     }
@@ -366,8 +324,6 @@ public class SelectionCardManager : MonoBehaviour
                 rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
                 rectTransform.anchoredPosition = Vector2.zero;
             }
-
-            Debug.Log($"[SelectionCardManager] Created guardian copy");
         }
 
         return copiedHolder;
@@ -395,8 +351,6 @@ public class SelectionCardManager : MonoBehaviour
                 rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
                 rectTransform.anchoredPosition = Vector2.zero;
             }
-
-            Debug.Log($"[SelectionCardManager] Created legend stone copy");
         }
 
         return copiedHolder;
@@ -405,7 +359,6 @@ public class SelectionCardManager : MonoBehaviour
     {
         if (regularCardsContainer == null || cardRowPrefab == null || cardHolderPrefab == null)
         {
-            Debug.LogError("[SelectionCardManager] regularCardsContainer, cardRowPrefab, or cardHolderPrefab not assigned!");
             return;
         }
 
@@ -416,12 +369,10 @@ public class SelectionCardManager : MonoBehaviour
         for (int i = 0; i < cardRows.Count; i++)
         {
             int rowCount = cardRows[i].childCount;
-            Debug.Log($"[SelectionCardManager] Row {i + 1} has {rowCount} cards (max {CARDS_PER_ROW})");
 
             if (rowCount < CARDS_PER_ROW)
             {
                 targetRow = cardRows[i];
-                Debug.Log($"[SelectionCardManager] Using existing row {i + 1}");
                 break;
             }
         }
@@ -435,11 +386,9 @@ public class SelectionCardManager : MonoBehaviour
                 GameObject newRowObj = Instantiate(cardRowPrefab, regularCardsContainer);
                 cardRows.Add(newRowObj.transform);
                 targetRow = newRowObj.transform;
-                Debug.Log($"[SelectionCardManager] Created new row {cardRows.Count}");
             }
             else
             {
-                Debug.LogError($"[SelectionCardManager] No available rows for card! Current rows: {cardRows.Count}/{MAX_ROWS}, Total cards: {selectedCards.Count}/{MAX_REGULAR_CARDS}");
                 return;
             }
         }
@@ -463,8 +412,6 @@ public class SelectionCardManager : MonoBehaviour
             // Track the copy
             cardCopies[originalHolder] = copiedHolder;
         }
-
-        Debug.Log($"[SelectionCardManager] Card copy added to row {cardRows.IndexOf(targetRow) + 1}, row now has {targetRow.childCount} cards");
     }
 
     public void DeselectCard(SelectionCardHolder holder, string cardId)
@@ -483,7 +430,6 @@ public class SelectionCardManager : MonoBehaviour
                     guardianCopy = null;
                 }
                 cardCopies.Remove(holder);
-                Debug.Log($"[SelectionCardManager] Guardian deselected: {cardId}");
             }
         }
         else if (cardType == "legendstone")
@@ -498,7 +444,6 @@ public class SelectionCardManager : MonoBehaviour
                     legendStoneCopy = null;
                 }
                 cardCopies.Remove(holder);
-                Debug.Log($"[SelectionCardManager] Legend Stone deselected: {cardId}");
             }
         }
         else
@@ -517,14 +462,11 @@ public class SelectionCardManager : MonoBehaviour
                     if (copy != null)
                     {
                         Destroy(copy.gameObject);
-                        Debug.Log($"[SelectionCardManager] Destroyed copy of {cardId}");
                     }
                 }
 
                 // Cleanup rows if needed
                 RemoveCardFromRows();
-
-                Debug.Log($"[SelectionCardManager] Card deselected: {cardId}. Regular cards: {selectedCards.Count}/{MAX_REGULAR_CARDS}");
             }
         }
     }
@@ -540,14 +482,12 @@ public class SelectionCardManager : MonoBehaviour
             {
                 Transform lastCard = lastRow.GetChild(lastRow.childCount - 1);
                 Destroy(lastCard.gameObject);
-                Debug.Log($"[SelectionCardManager] Removed card from row {cardRows.Count}");
 
                 // Remove empty last row
                 if (lastRow.childCount == 0)
                 {
                     Destroy(lastRow.gameObject);
                     cardRows.RemoveAt(cardRows.Count - 1);
-                    Debug.Log($"[SelectionCardManager] Removed empty row");
                 }
             }
         }
@@ -589,7 +529,6 @@ public class SelectionCardManager : MonoBehaviour
         cardCopies.Clear();
         guardianSlot = null;
         legendStoneSlot = null;
-        Debug.Log("[SelectionCardManager] Selection cleared");
     }
 
     /// <summary>
@@ -606,7 +545,6 @@ public class SelectionCardManager : MonoBehaviour
         string key = $"{registryName}:{cardType}";
 
         cardHolderRegistry[key] = holder;
-        Debug.Log($"[SelectionCardManager] Registered card holder: {key}");
     }
 
     /// <summary>
@@ -638,13 +576,10 @@ public class SelectionCardManager : MonoBehaviour
     /// </summary>
     public bool AutoSelectCardByRegistryName(string registryName, string cardType)
     {
-        Debug.Log($"[SelectionCardManager] AutoSelect called - Registry: {registryName}, Type: {cardType}");
-
         // Find the card holder with this registry name
         SelectionCardHolder targetHolder = FindCardHolderByRegistryName(registryName, cardType);
         if (targetHolder == null)
         {
-            Debug.LogError($"[SelectionCardManager] AutoSelect failed - Card not found: {registryName} ({cardType})");
             return false;
         }
 
@@ -654,11 +589,9 @@ public class SelectionCardManager : MonoBehaviour
         {
             // Mark as selected visually
             targetHolder.SetCardGreyedOut(true);
-            Debug.Log($"[SelectionCardManager] AutoSelect succeeded: {registryName}");
         }
         else
         {
-            Debug.LogError($"[SelectionCardManager] AutoSelect SelectCard failed: {registryName}");
         }
 
         return success;
@@ -674,11 +607,8 @@ public class SelectionCardManager : MonoBehaviour
         string key = $"{registryName}:{cardType}";
         if (cardHolderRegistry.TryGetValue(key, out SelectionCardHolder holder))
         {
-            Debug.Log($"[SelectionCardManager] Found card holder in registry: {key}");
             return holder;
         }
-
-        Debug.LogWarning($"[SelectionCardManager] Card holder not in registry: {key}. Searching scene...");
 
         // Fallback: search all card holders in the scene
         SelectionCardHolder[] allHolders = FindObjectsByType<SelectionCardHolder>(FindObjectsSortMode.None);
@@ -745,26 +675,19 @@ public class SelectionCardManager : MonoBehaviour
     /// </summary>
     public string GetSelectedGuardianId()
     {
-        Debug.Log($"[SelectionCardManager] GetSelectedGuardianId called. guardianSlot: {(guardianSlot != null ? "SET" : "NULL")}");
-
         if (guardianSlot != null)
         {
             string cardType = guardianSlot.GetCardType();
             object cardData = guardianSlot.GetPublicCardData();
 
-            Debug.Log($"[SelectionCardManager] Guardian slot cardType: {cardType}, cardData type: {cardData?.GetType().Name ?? "null"}");
-
             if (cardType == "guardian" && cardData is CastingLegendData legendData)
             {
-                Debug.Log($"[SelectionCardManager] Guardian found: {legendData.id}");
                 return legendData.id;
             }
 
-            Debug.LogWarning($"[SelectionCardManager] Guardian slot has wrong type: {cardType}");
             return null;
         }
 
-        Debug.LogWarning($"[SelectionCardManager] No guardian selected!");
         return null;
     }
 
@@ -783,7 +706,6 @@ public class SelectionCardManager : MonoBehaviour
                 return stoneData.id;
             }
 
-            Debug.LogWarning($"[SelectionCardManager] Legend stone slot has wrong type: {cardType}");
             return null;
         }
         return null;
@@ -799,7 +721,6 @@ public class SelectionCardManager : MonoBehaviour
 
         if (playfabBackend == null)
         {
-            Debug.LogError("[SelectionCardManager] PlayFabBackendManager not found!");
             return;
         }
 
@@ -808,15 +729,9 @@ public class SelectionCardManager : MonoBehaviour
         string guardianId = GetSelectedGuardianId();
         string legendStoneId = GetSelectedLegendStoneId();
 
-        Debug.Log($"[SelectionCardManager] Selected deck:");
-        Debug.Log($"  Cards: {string.Join(", ", cardIds)}");
-        Debug.Log($"  Guardian: {guardianId}");
-        Debug.Log($"  Legend Stone: {legendStoneId}");
-
         // Validate deck
         if (cardIds.Count == 0)
         {
-            Debug.LogWarning("[SelectionCardManager] No cards selected!");
             return;
         }
 
@@ -859,19 +774,15 @@ public class SelectionCardManager : MonoBehaviour
             });
         }
 
-        Debug.Log($"[SelectionCardManager] Saving active deck with {cardDtos.Count} cards");
-
         // Save as active deck (the one selected for the match)
         playfabBackend.SaveActiveDeck("My Deck", cardDtos, (success) =>
         {
             if (success)
             {
-                Debug.Log("[SelectionCardManager] Active deck saved successfully to PlayFab!");
                 SubmitDeckSuccess();
             }
             else
             {
-                Debug.LogError("[SelectionCardManager] Failed to save active deck to PlayFab!");
                 SubmitDeckFailed();
             }
         });
@@ -879,13 +790,11 @@ public class SelectionCardManager : MonoBehaviour
 
     private void SubmitDeckSuccess()
     {
-        Debug.Log("[SelectionCardManager] Deck submitted successfully");
         // Add any UI feedback here
     }
 
     private void SubmitDeckFailed()
     {
-        Debug.LogError("[SelectionCardManager] Deck submission failed");
         // Add any UI feedback here
     }
 
@@ -894,8 +803,6 @@ public class SelectionCardManager : MonoBehaviour
     /// </summary>
     public void StartMatchmaking()
     {
-        Debug.Log("[SelectionCardManager] Starting matchmaking");
-
         // Start matchmaking (backend will use player's active deck from DB)
         //    if (MatchmakingManager.Instance != null)
         //   {
@@ -922,7 +829,6 @@ public class SelectionCardManager : MonoBehaviour
             return cardData_obj.id;
         else
         {
-            Debug.LogError($"[SelectionCardManager] GetCardIdFromType: Type mismatch! CardType: {cardType}, CardData: {cardData?.GetType().Name ?? "null"}");
             return "Unknown";
         }
     }

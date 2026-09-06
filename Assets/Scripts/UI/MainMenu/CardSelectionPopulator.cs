@@ -38,11 +38,8 @@ public class CardSelectionPopulator : MonoBehaviour
     {
         if (cardCollection == null || cardCollection.cards.Count == 0)
         {
-            Debug.LogWarning("[CardSelectionPopulator] No cards in PlayFab collection");
             return;
         }
-
-        Debug.Log($"[CardSelectionPopulator] Populating {cardCollection.cards.Count} cards from PlayFab");
 
         // Clear existing cards
         foreach (Transform child in allCardsContainer)
@@ -85,8 +82,6 @@ public class CardSelectionPopulator : MonoBehaviour
             }
         }
         Transform emptyrow1 = Instantiate(rowPrefab, allCardsContainer).transform;
-
-        Debug.Log($"[CardSelectionPopulator] Finished populating {cardIndex} cards from PlayFab");
     }
 
     /// <summary>
@@ -99,7 +94,6 @@ public class CardSelectionPopulator : MonoBehaviour
         if (cardData != null)
         {
             holder.SetupCard(cardData, playerCard);
-            Debug.Log($"[CardSelectionPopulator] Set up card from PlayFab: {cardData.cardName} [ID: {playerCard.cardId}] (Lv.{playerCard.level})");
 
             if (selectionManager != null)
                 selectionManager.RegisterCardHolder(holder);
@@ -111,7 +105,6 @@ public class CardSelectionPopulator : MonoBehaviour
         if (guardianData != null)
         {
             holder.SetupGuardian(guardianData, playerCard);
-            Debug.Log($"[CardSelectionPopulator] Set up guardian from PlayFab: {guardianData.legendName} [ID: {playerCard.cardId}]");
 
             if (selectionManager != null)
                 selectionManager.RegisterCardHolder(holder);
@@ -123,14 +116,11 @@ public class CardSelectionPopulator : MonoBehaviour
         if (stoneData != null)
         {
             holder.SetupLegendStone(stoneData, playerCard);
-            Debug.Log($"[CardSelectionPopulator] Set up legend stone from PlayFab: {stoneData.stoneName} [ID: {playerCard.cardId}]");
 
             if (selectionManager != null)
                 selectionManager.RegisterCardHolder(holder);
             return;
         }
-
-        Debug.LogWarning($"[CardSelectionPopulator] Could not find card data with ID: {playerCard.cardId}");
     }
 
     /// <summary>
@@ -143,7 +133,6 @@ public class CardSelectionPopulator : MonoBehaviour
 
         if (deckRegistry == null)
         {
-            Debug.LogError("[CardSelectionPopulator] DeckRegistry not found!");
             return null;
         }
 
@@ -160,7 +149,6 @@ public class CardSelectionPopulator : MonoBehaviour
 
         if (deckRegistry == null)
         {
-            Debug.LogError("[CardSelectionPopulator] DeckRegistry not found!");
             return null;
         }
 
@@ -177,7 +165,6 @@ public class CardSelectionPopulator : MonoBehaviour
 
         if (deckRegistry == null)
         {
-            Debug.LogError("[CardSelectionPopulator] DeckRegistry not found!");
             return null;
         }
 
@@ -191,7 +178,6 @@ public class CardSelectionPopulator : MonoBehaviour
     {
         if (deckRegistry == null || deckRegistry.allCards == null)
         {
-            Debug.LogError("[CardSelectionPopulator] DeckRegistry not found or has no cards!");
             return null;
         }
 
@@ -242,8 +228,6 @@ public class CardSelectionPopulator : MonoBehaviour
     /// Populate all cards from player data
     /// </summary>
 
-
-
     /// <summary>
     /// Find CardData in registry by registry_name
     /// </summary>
@@ -251,7 +235,6 @@ public class CardSelectionPopulator : MonoBehaviour
     {
         if (deckRegistry == null || deckRegistry.allCards == null)
         {
-            Debug.LogError("[CardSelectionPopulator] DeckRegistry not found or has no cards!");
             return null;
         }
 
@@ -263,7 +246,6 @@ public class CardSelectionPopulator : MonoBehaviour
             }
         }
 
-        Debug.LogWarning($"[CardSelectionPopulator] Card with registry name '{registryName}' not found in registry");
         return null;
     }
 
@@ -274,7 +256,6 @@ public class CardSelectionPopulator : MonoBehaviour
     {
         if (deckRegistry == null || deckRegistry.allGuardians == null)
         {
-            Debug.LogError("[CardSelectionPopulator] DeckRegistry not found or has no casting legends!");
             return null;
         }
 
@@ -286,7 +267,6 @@ public class CardSelectionPopulator : MonoBehaviour
             }
         }
 
-        Debug.LogWarning($"[CardSelectionPopulator] Casting Legend with registry name '{registryName}' not found in registry");
         return null;
     }
 
@@ -297,7 +277,6 @@ public class CardSelectionPopulator : MonoBehaviour
     {
         if (deckRegistry == null || deckRegistry.allGuardians == null)
         {
-            Debug.LogError("[CardSelectionPopulator] DeckRegistry not found or has no guardians!");
             return null;
         }
 
@@ -309,7 +288,6 @@ public class CardSelectionPopulator : MonoBehaviour
             }
         }
 
-        Debug.LogWarning($"[CardSelectionPopulator] Guardian with registry name '{registryName}' not found in registry");
         return null;
     }
 
@@ -320,7 +298,6 @@ public class CardSelectionPopulator : MonoBehaviour
     {
         if (deckRegistry == null || deckRegistry.allLegendStones == null)
         {
-            Debug.LogError("[CardSelectionPopulator] DeckRegistry not found or has no legend stones!");
             return null;
         }
 
@@ -332,7 +309,6 @@ public class CardSelectionPopulator : MonoBehaviour
             }
         }
 
-        Debug.LogWarning($"[CardSelectionPopulator] Legend Stone with registry name '{registryName}' not found in registry");
         return null;
     }
 }

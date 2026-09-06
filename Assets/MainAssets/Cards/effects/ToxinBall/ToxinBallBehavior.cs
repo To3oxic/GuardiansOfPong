@@ -25,11 +25,9 @@ public class ToxinBallBehavior : BallController
         if (ballCollider != null)
         {
             ballCollider.isTrigger = true;
-            Debug.Log($"[ToxinBallBehavior] Collider set to trigger: {ballCollider.GetType().Name}");
         }
         else
         {
-            Debug.LogError("[ToxinBallBehavior] No collider found on toxin ball! OnTriggerEnter won't work!");
         }
     }
 
@@ -42,7 +40,6 @@ public class ToxinBallBehavior : BallController
     {
         toxinEffect = effect;
     }
-
 
     new private void OnTriggerEnter(Collider other)
     {
@@ -60,6 +57,4 @@ public class ToxinBallBehavior : BallController
         }
         Destroy(gameObject);
     }
-
-
 }

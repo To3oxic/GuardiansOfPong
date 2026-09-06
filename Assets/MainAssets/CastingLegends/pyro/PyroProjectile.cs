@@ -49,14 +49,11 @@ public class PyroProjectile : ProjectileController
                 // Deal AOE damage
                 unit.TakeDamage(aoeDamage);
                 damagedUnits.Add(unit);
-
-                Debug.Log($"[PyroProjectile] Hit enemy unit '{unit.name}' in AOE for {aoeDamage} damage. Position: {transform.position}");
             }
         }
 
         if (damagedUnits.Count > 0)
         {
-            Debug.Log($"[PyroProjectile] AOE explosion hit {damagedUnits.Count} enemy units at position {transform.position}");
         }
     }
 
@@ -67,5 +64,4 @@ public class PyroProjectile : ProjectileController
         Gizmos.DrawWireSphere(transform.position, aoeRange);
     }
 }
-
 

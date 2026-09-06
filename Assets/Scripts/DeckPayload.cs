@@ -104,8 +104,6 @@ string castingLegendIdVal = castingLegendId ?? string.Empty;
             legend_stone = new LegendStoneDto { id = legendStoneIdVal, registry_name = legendStoneIdVal, level = stoneLevel };
         }
 
-        Debug.Log($"[DeckPayload] Serializing deck - Legend: '{castingLegendIdVal}' (Lvl {legendLevel}), Stone: '{legendStoneIdVal}' (Lvl {stoneLevel}), Cards: {cardIds?.Count ?? 0}");
-
         // Serialize list size
         int count = cardIds?.Count ?? 0;
         serializer.SerializeValue(ref count);
@@ -122,10 +120,8 @@ string castingLegendIdVal = castingLegendId ?? string.Empty;
                 serializer.SerializeValue(ref cardLevel);
                 cards.Add(new CardDataDto { id = cardId, registry_name = cardId, level = cardLevel });
             }
-            Debug.Log($"[DeckPayload] Deserialized deck - Legend: '{castingLegendIdVal}' (Lvl {legendLevel}), Stone: '{legendStoneIdVal}' (Lvl {stoneLevel}), Cards: {cards.Count}");
             if (cards.Count > 0)
             {
-                Debug.Log($"[DeckPayload] Card IDs and levels: {string.Join(", ", cardIds)}");
             }
         }
         else
@@ -140,7 +136,6 @@ string castingLegendIdVal = castingLegendId ?? string.Empty;
             }
             if (cardIds != null && cardIds.Count > 0)
             {
-                Debug.Log($"[DeckPayload] Sending cards: {string.Join(", ", cardIds)}");
             }
         }
     }

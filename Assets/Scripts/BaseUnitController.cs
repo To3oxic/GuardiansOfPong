@@ -35,8 +35,6 @@ public abstract class BaseUnitController : NetworkBehaviour, IPlaceable, IHasHP
         writePerm: NetworkVariableWritePermission.Server
     );
 
-
-
     // HP bar UI references
     [System.NonSerialized] protected GameObject hpBarCanvasInstance;
     [System.NonSerialized] protected Unity.UI.Shaders.Sample.CustomSlider hpBarSlider; // The HP bar slider
@@ -52,7 +50,6 @@ public abstract class BaseUnitController : NetworkBehaviour, IPlaceable, IHasHP
 
     // Canvas overlay prefab for spawn animation (set in Inspector on prefab)
     public GameObject spawnCanvasPrefab;
-
 
     // Movement direction (like BallController's launchDirection)
     [System.NonSerialized] protected Vector3 movementDirection = Vector3.forward;
@@ -82,7 +79,6 @@ public abstract class BaseUnitController : NetworkBehaviour, IPlaceable, IHasHP
 
     protected virtual void Start()
     {
-
         unitCollider = GetComponent<Collider>();
         animator = GetComponent<Animator>();
         networkAnimator = GetComponent<NetworkAnimator>();
@@ -195,7 +191,6 @@ public abstract class BaseUnitController : NetworkBehaviour, IPlaceable, IHasHP
         }
 
         Vector3 movement = movementDirection * currentSpeed * Time.deltaTime;
-        Debug.Log($"[{GetType().Name}] (ID: {NetworkObjectId}) Moving unit by {movementDirection} {moveSpeed} from position {transform.position} hahaha");
         Vector3 newPosition = transform.position + movement;
 
         // Apply movement
@@ -282,7 +277,6 @@ public abstract class BaseUnitController : NetworkBehaviour, IPlaceable, IHasHP
                 // Move in the direction the ball is traveling
                 // Try to access ball's launch direction if available
                 movementDirection = Vector3.forward; // Default, ball direction handling can be improved
-                Debug.Log($"[{GetType().Name}] Hit by ball, moving with ball direction");
             }
         }
 
@@ -301,12 +295,9 @@ public abstract class BaseUnitController : NetworkBehaviour, IPlaceable, IHasHP
                 Vector3 separationDirection = (transform.position - other.transform.position).normalized;
                 transform.position += separationDirection * UNIT_COLLISION_SEPARATION;
                 lastValidPosition = transform.position;
-
-                Debug.Log($"[{GetType().Name}] Smaller unit pushed away from larger {otherUnit.GetType().Name} (weight: {weight:F2} < {otherweight:F2})");
             }
             else
             {
-                Debug.Log($"[{GetType().Name}] Larger or equal unit, not moving (weight: {weight:F2} >= {otherweight:F2})");
             }
         }
     }
@@ -370,7 +361,6 @@ public abstract class BaseUnitController : NetworkBehaviour, IPlaceable, IHasHP
             float unitHeight = GetUnitHeight();
             hpBarCanvasInstance.transform.position = transform.position + Vector3.up * (unitHeight + 0.5f);
 
-
             hpBarCanvasInstance.transform.localScale = new Vector3(2f, 2f, 1f); // Set size to 2x
 
             // Align canvas rotation to camera's Z rotation (like spawn animation)
@@ -378,13 +368,10 @@ public abstract class BaseUnitController : NetworkBehaviour, IPlaceable, IHasHP
             float cameraZ = mainCamera != null ? mainCamera.transform.eulerAngles.z : 0;
             hpBarCanvasInstance.transform.rotation = Quaternion.Euler(90f, 0, cameraZ);
 
-
-
             // Get the Slider component for the HP bar
             hpBarSlider = hpBarCanvasInstance.GetComponentInChildren<CustomSlider>();
             if (hpBarSlider == null)
             {
-                Debug.LogError($"[{GetType().Name}] HP bar canvas prefab doesn't have a Slider component!");
             }
             else
             {
@@ -431,7 +418,6 @@ public abstract class BaseUnitController : NetworkBehaviour, IPlaceable, IHasHP
     /// </summary>
     private System.Collections.IEnumerator PlaySpawnAnimation()
     {
-
         // Drop the unit from Y+2 to Y=0 in 0.05 seconds
         float dropDuration = 0.002f;
         float elapsed = 0f;
@@ -500,7 +486,6 @@ public abstract class BaseUnitController : NetworkBehaviour, IPlaceable, IHasHP
         }
 
         // Animation complete - flag will be reset by Update() on next frame
-        Debug.Log($"[{GetType().Name}] Spawn animation complete for unit ID: {NetworkObjectId}");
         isSpawningAnimation = false;
     }
 
@@ -521,7 +506,6 @@ public abstract class BaseUnitController : NetworkBehaviour, IPlaceable, IHasHP
 
         if (particleEffectPrefab == null)
         {
-            Debug.Log($"[{GetType().Name}] No spawn particle effect prefab set.");
             return;
         }
 
@@ -557,10 +541,8 @@ public abstract class BaseUnitController : NetworkBehaviour, IPlaceable, IHasHP
         if (hpBarCanvasInstance == null || hpBarSlider == null)
             return;
 
-
         float unitHeight = GetUnitHeight();
         hpBarCanvasInstance.transform.position = transform.position + Vector3.up * (unitHeight + 0.5f);
-
 
         // Keep HP bar rotation aligned to camera (90, 0, cameraZ)
         Camera mainCamera = Camera.main;
@@ -638,8 +620,6 @@ public abstract class BaseUnitController : NetworkBehaviour, IPlaceable, IHasHP
             PaddleController[] paddles = FindObjectsByType<PaddleController>(FindObjectsSortMode.None);
             foreach (var paddle in paddles)
             {
-                Debug.Log($"[{GetType().Name}] (ID: {NetworkObjectId}) Checking paddle: {paddle.name}, Unit Owner: {OwnerClientId}, Paddle Owner: {paddle.OwnerClientId}");
-
                 // Only target opponent's paddle
                 if (paddle.OwnerClientId != OwnerClientId)
                 {
@@ -648,12 +628,10 @@ public abstract class BaseUnitController : NetworkBehaviour, IPlaceable, IHasHP
                     {
                         closestDistance = distance;
                         closestTarget = paddle.transform;
-                        Debug.Log($"[{GetType().Name}] (ID: {NetworkObjectId}) Found valid opponent paddle target: {paddle.name}, Unit Owner: {OwnerClientId}, Paddle Owner: {paddle.OwnerClientId}");
                     }
                 }
                 else
                 {
-                    Debug.Log($"[{GetType().Name}] (ID: {NetworkObjectId}) Skipping own paddle: {paddle.name}, Unit Owner: {OwnerClientId}, Paddle Owner: {paddle.OwnerClientId}");
                 }
             }
         }
@@ -671,11 +649,9 @@ public abstract class BaseUnitController : NetworkBehaviour, IPlaceable, IHasHP
                 currentTarget = closestTarget;
                 if (currentTarget.TryGetComponent<PaddleController>(out var paddle))
                 {
-                    Debug.Log($"[{GetType().Name}] (ID: {NetworkObjectId}) New paddle target acquired: {currentTarget.name}, Unit Owner: {OwnerClientId}, Paddle Owner: {paddle.OwnerClientId}");
                 }
                 else
                 {
-                    Debug.Log($"[{GetType().Name}] (ID: {NetworkObjectId}) New target acquired: {currentTarget.name}");
                 }
             }
         }
@@ -694,14 +670,11 @@ public abstract class BaseUnitController : NetworkBehaviour, IPlaceable, IHasHP
         {
             if (targetUnit.isDying || targetUnit.currentHP.Value <= 0)
             {
-                Debug.Log($"[{GetType().Name}] (ID: {NetworkObjectId}) Target {currentTarget.name} is already dying or dead, finding new target.");
                 // Target is already dying, find a new one
                 FindNewTarget();
                 return; // Skip this attack cycle
             }
         }
-
-        Debug.Log($"[{GetType().Name}] (ID: {NetworkObjectId}) Server: Preparing to attack {currentTarget.name}");
 
         if (isRangedUnit)
         {
@@ -735,7 +708,6 @@ public abstract class BaseUnitController : NetworkBehaviour, IPlaceable, IHasHP
         // Double-check if target is still valid (not dying or dead) before firing
         if (currentTarget == null)
         {
-            Debug.LogWarning($"[{GetType().Name}:{NetworkObjectId}] No target to fire at!");
             return;
         }
 
@@ -744,7 +716,6 @@ public abstract class BaseUnitController : NetworkBehaviour, IPlaceable, IHasHP
         {
             if (targetUnit.isDying || targetUnit.currentHP.Value <= 0)
             {
-                Debug.Log($"[{GetType().Name}:{NetworkObjectId}] Target {currentTarget.name} is already dying or dead, canceling projectile.");
                 // Target is already dying, don't waste a projectile
                 return;
             }
@@ -752,7 +723,6 @@ public abstract class BaseUnitController : NetworkBehaviour, IPlaceable, IHasHP
 
         if (projectilePrefab == null)
         {
-            Debug.LogError($"[{GetType().Name}:{NetworkObjectId}] Projectile Prefab is not assigned on {gameObject.name}!");
             return;
         }
 
@@ -770,7 +740,6 @@ public abstract class BaseUnitController : NetworkBehaviour, IPlaceable, IHasHP
             // Default spawn if no specific point is set
             spawnPosition = transform.position + transform.forward * 1f; // Example: 1 unit in front
             spawnRotation = transform.rotation; // Align with unit's facing direction
-            Debug.LogWarning($"[{GetType().Name}:{NetworkObjectId}] Projectile Spawn Point not set for {gameObject.name}, using default spawn position and rotation.");
         }
 
         GameObject projectileInstance = Instantiate(projectilePrefab, spawnPosition, spawnRotation);
@@ -788,12 +757,10 @@ public abstract class BaseUnitController : NetworkBehaviour, IPlaceable, IHasHP
             }
             else
             {
-                Debug.LogWarning($"[{GetType().Name}:{NetworkObjectId}] Projectile {projectileInstance.name} is missing a ProjectileController script for initialization.");
             }
         }
         else
         {
-            Debug.LogError($"[{GetType().Name}:{NetworkObjectId}] Projectile Prefab {projectilePrefab.name} is missing a NetworkObject component. Destroying instance.");
             Destroy(projectileInstance);
         }
     }
@@ -808,7 +775,6 @@ public abstract class BaseUnitController : NetworkBehaviour, IPlaceable, IHasHP
         {
             if (targetUnit.isDying || targetUnit.currentHP.Value <= 0)
             {
-                Debug.Log($"[{GetType().Name}:{NetworkObjectId}] Target {currentTarget.name} is already dying or dead, canceling attack.");
                 // Target is already dying, don't waste the attack
                 return;
             }
@@ -822,7 +788,6 @@ public abstract class BaseUnitController : NetworkBehaviour, IPlaceable, IHasHP
                 return;
 
             placeable.TakeDamage(attackDamage);
-            Debug.Log($"[{GetType().Name}] (ID: {NetworkObjectId}) SWIPE! Dealt {attackDamage} damage to placeable {currentTarget.name}");
         }
         // If not a placeable, try to damage a paddle
         else if (currentTarget.TryGetComponent<PaddleController>(out var paddle))
@@ -831,7 +796,6 @@ public abstract class BaseUnitController : NetworkBehaviour, IPlaceable, IHasHP
             if (paddle.OwnerClientId != OwnerClientId)
             {
                 paddle.ReduceHP(attackDamage);
-                Debug.Log($"[{GetType().Name}] (ID: {NetworkObjectId}) SWIPE! Dealt {attackDamage} damage to opponent's paddle {currentTarget.name}");
             }
         }
     }
@@ -862,7 +826,6 @@ public abstract class BaseUnitController : NetworkBehaviour, IPlaceable, IHasHP
 
         int newHP = currentHP.Value - amount;
         currentHP.Value = newHP;
-        Debug.Log($"[{GetType().Name}] (ID: {NetworkObjectId}) Took {amount} damage, HP is now {currentHP.Value}");
 
         // Flash red to indicate damage (all clients)
         FlashRedClientRpc();
@@ -893,7 +856,6 @@ public abstract class BaseUnitController : NetworkBehaviour, IPlaceable, IHasHP
 
     protected virtual System.Collections.IEnumerator HandleDeath()
     {
-        Debug.Log($"[{GetType().Name}] (ID: {NetworkObjectId}) Starting death sequence.");
         moveSpeed = 0f;
         currentTarget = null; // Clear current target when dead
 
@@ -976,7 +938,6 @@ public abstract class BaseUnitController : NetworkBehaviour, IPlaceable, IHasHP
                 }
             }
         }
-        Debug.Log($"[{GetType().Name}] Flashing red to indicate damage.");
         // Wait for flash duration
         yield return new WaitForSeconds(0.1f);
 
@@ -1032,7 +993,6 @@ public abstract class BaseUnitController : NetworkBehaviour, IPlaceable, IHasHP
     public void SetAttackDamage(int damage)
     {
         attackDamage = damage;
-        Debug.Log($"[{GetType().Name}] (ID: {NetworkObjectId}) Attack damage set to {damage}");
     }
 
     /// <summary>
@@ -1045,8 +1005,6 @@ public abstract class BaseUnitController : NetworkBehaviour, IPlaceable, IHasHP
             maxHP.Value = hp;
             currentHP.Value = hp;
         }
-
-        Debug.Log($"[{GetType().Name}] (ID: {NetworkObjectId}) Max HP set to {hp}");
     }
 
     /// <summary>

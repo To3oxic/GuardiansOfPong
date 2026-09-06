@@ -13,7 +13,6 @@ public class AncientSpiritEffect : CardEffect
 
     public override void StartPlacement(Action<Vector3, Vector3> onPlacementConfirmed)
     {
-
     }
 
     public override GameObject GetPreviewPrefab()
@@ -35,20 +34,17 @@ public class AncientSpiritEffect : CardEffect
 
         if (ancientSpiritPrefab == null)
         {
-            Debug.LogError("[AncientSpiritEffect] Ancient Spirit Prefab not assigned!");
             return null;
         }
 
         // Ensure Y coordinate is always 0 for ground placement
         position.y = 0f;
 
-        Debug.Log($"[AncientSpiritEffect] Attempting to instantiate AncientSpirit at position: {position}, level: {cardLevel}");
         GameObject spirit = Instantiate(ancientSpiritPrefab, position, Quaternion.identity);
         NetworkObject netObj = spirit.GetComponent<NetworkObject>();
         if (netObj != null)
         {
             netObj.SpawnWithOwnership(playerId);
-            Debug.Log($"[AncientSpiritEffect] AncientSpirit network object spawned for player {playerId}.");
 
             // Apply leveled stats to the unit
             BaseUnitController unit = spirit.GetComponent<BaseUnitController>();
@@ -62,7 +58,6 @@ public class AncientSpiritEffect : CardEffect
         }
         else
         {
-            Debug.LogWarning("[AncientSpiritEffect] AncientSpirit prefab is missing NetworkObject component!");
             GameObject.Destroy(spirit);
             return null;
         }
@@ -77,7 +72,6 @@ public class AncientSpiritEffect : CardEffect
         if (ScreenShakeManager.Instance != null)
         {
             ScreenShakeManager.Instance.ShakeScreen(intensity: 0.8f, duration: 0.6f, frequency: 12f);
-            Debug.Log("[AncientSpiritEffect] Screen shake triggered for Ancient Spirit spawn");
         }
     }
 }

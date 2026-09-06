@@ -34,7 +34,6 @@ public class GuardiansController : NetworkBehaviour
         }
         if (animator == null)
         {
-            Debug.LogWarning("GuardiansController is missing an Animator component. Animations will not play, and animation-driven firing will not work.", this);
         }
     }
 
@@ -97,7 +96,6 @@ public class GuardiansController : NetworkBehaviour
             {
                 // Fallback if animator isn't set up: fire directly.
                 // Consider removing this if animation is strictly required for firing.
-                Debug.LogWarning("GuardiansController: Animator or attackTriggerName not set. Firing directly. Ensure Animator is configured for animation-driven firing.", this);
                 ActualFireProjectile();
             }
             nextFireTime = Time.time + 1f / fireRate;
@@ -108,8 +106,6 @@ public class GuardiansController : NetworkBehaviour
     protected void PlayAttackAnimationClientRpc()
     {
         if (IsServer) return; // Server already triggered its animator
-
-        Debug.Log($"[GuardiansController] PlayAttackAnimationClientRpc received on client {NetworkManager.Singleton.LocalClientId} for {gameObject.name}. Animator is null: {animator == null}");
 
         if (animator != null && !string.IsNullOrEmpty(attackTriggerName))
         {
@@ -154,7 +150,6 @@ public class GuardiansController : NetworkBehaviour
 
             else
             {
-                Debug.LogError("Projectile prefab does not have ProjectileController or GuardiansProjectile component!", this);
                 if (projectileNO != null && projectileNO.IsSpawned) projectileNO.Despawn(true); // Clean up if misconfigured
                 else Destroy(projectileGO);
             }

@@ -13,14 +13,12 @@ public class TreeEffect : CardEffect
     public override float GetEffectRadius() => 1f;
     public override void StartPlacement(Action<Vector3, Vector3> onPlacementConfirmed)
     {
-
     }
 
     public override GameObject GetPreviewPrefab()
     {
         if (treePrefabs == null || treePrefabs.Count == 0)
         {
-            Debug.LogError("[TreeEffect] No treePrefabs assigned or list is empty!");
             return null;
         }
         int randomIndex = UnityEngine.Random.Range(0, treePrefabs.Count);
@@ -37,13 +35,11 @@ public class TreeEffect : CardEffect
 
         if (GameManager.Instance == null)
         {
-            Debug.LogError("[TreeEffect] GameManager.Instance is null.");
             return null;
         }
 
         if (treePrefabs == null || treePrefabs.Count == 0)
         {
-            Debug.LogError("[TreeEffect] No treePrefabs assigned or list is empty! Cannot apply effect.");
             return null;
         }
 
@@ -52,21 +48,18 @@ public class TreeEffect : CardEffect
 
         if (selectedTreePrefab == null)
         {
-            Debug.LogError($"[TreeEffect] Selected tree prefab at index {randomIndex} is null!");
             return null;
         }
 
         // Ensure Y coordinate is always 0 for ground placement
         position.y = 0f;
 
-        Debug.Log($"[TreeEffect] Attempting to instantiate tree: {selectedTreePrefab.name} at position: {position}, level: {cardLevel}");
         GameObject tree = GameObject.Instantiate(selectedTreePrefab, position, Quaternion.identity);
 
         var netObj = tree.GetComponent<NetworkObject>();
         if (netObj != null)
         {
             netObj.SpawnWithOwnership(playerId);
-            Debug.Log($"[TreeEffect] Tree ({selectedTreePrefab.name}) network object spawned for player {playerId}.");
 
             // Apply leveled stats to the unit
             BaseUnitController unit = tree.GetComponent<BaseUnitController>();
@@ -83,7 +76,6 @@ public class TreeEffect : CardEffect
         }
         else
         {
-            Debug.LogWarning($"[TreeEffect] Tree prefab ({selectedTreePrefab.name}) is missing NetworkObject!");
             GameObject.Destroy(tree);
             return null;
         }

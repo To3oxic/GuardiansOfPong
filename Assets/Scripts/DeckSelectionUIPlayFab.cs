@@ -60,7 +60,6 @@ public class DeckSelectionUIPlayFab : MonoBehaviour
         PlayFabBackendManager.Instance.LoadPlayerCardCollection((collection) =>
         {
             playerCards = collection;
-            Debug.Log($"[DeckSelectionUI] Loaded {playerCards.cards.Count} owned cards");
 
             // Load master card library
             PlayFabBackendManager.Instance.LoadCardLibrary((library) =>
@@ -126,7 +125,6 @@ public class DeckSelectionUIPlayFab : MonoBehaviour
         if (!PlayFabBackendManager.Instance.OwnsCard(
             card.cardName.ToLower().Replace(" ", "_")))
         {
-            Debug.LogWarning($"[DeckSelectionUI] Player doesn't own card: {card.cardName}");
             return;
         }
 
@@ -242,7 +240,6 @@ public class DeckSelectionUIPlayFab : MonoBehaviour
     {
         if (selectedCards.Count == 0 || selectedLegend == null || selectedStone == null)
         {
-            Debug.LogError("[DeckSelectionUI] Cannot save deck: Missing cards, legend, or stone");
             callback?.Invoke(false);
             return;
         }
@@ -267,7 +264,6 @@ public class DeckSelectionUIPlayFab : MonoBehaviour
         {
             if (success)
             {
-                Debug.Log($"[DeckSelectionUI] Deck '{deckName}' saved to PlayFab with {cardIds.Count} items (IDs: {string.Join(", ", cardIds)})");
             }
             callback?.Invoke(success);
         });

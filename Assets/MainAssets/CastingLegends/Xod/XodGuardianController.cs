@@ -34,7 +34,6 @@ public class XodGuardianController : GuardiansController
 
         if (ownerPaddle == null)
         {
-            Debug.LogWarning("[XodGuardianController] Could not find owner paddle!");
         }
 
         nextSpawnTime = Time.time + spawnInterval;
@@ -56,13 +55,11 @@ public class XodGuardianController : GuardiansController
     {
         if (unitToSpawnPrefab == null)
         {
-            Debug.LogWarning("[XodGuardianController] unitToSpawnPrefab is not assigned!");
             return;
         }
 
         if (ownerPaddle == null)
         {
-            Debug.LogWarning("[XodGuardianController] Owner paddle is null, cannot spawn unit!");
             return;
         }
 
@@ -80,8 +77,6 @@ public class XodGuardianController : GuardiansController
 
         spawnPosition.y = 0f;
 
-        Debug.Log($"[XodGuardianController] Spawning unit at position: {spawnPosition}");
-
         // Instantiate the unit
         GameObject unitInstance = Instantiate(unitToSpawnPrefab, spawnPosition, Quaternion.identity);
 
@@ -90,11 +85,9 @@ public class XodGuardianController : GuardiansController
         if (unitNetObj != null)
         {
             unitNetObj.SpawnWithOwnership(OwnerClientId);
-            Debug.Log($"[XodGuardianController] Unit spawned and networked for player {OwnerClientId}");
         }
         else
         {
-            Debug.LogWarning("[XodGuardianController] Spawned unit is missing NetworkObject component!");
             Destroy(unitInstance);
         }
     }

@@ -16,8 +16,5 @@ public class MonsterController : BaseUnitController
 
         targetSearchRadius = 8f;
         weight = 1f;
-        Debug.Log($"[MonsterController] Initialized with OwnerClientId: {OwnerClientId}");
     }
-
-
 }

@@ -23,7 +23,6 @@ public class FPSCounter : MonoBehaviour
 
         if (fpsText == null)
         {
-            Debug.LogError("[FPSCounter] No TextMeshProUGUI found!");
             enabled = false;
         }
     }
