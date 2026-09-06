@@ -77,6 +77,23 @@ public static class ScenePolishTools
             "or 'Set to Baked' (keeps a soft bounce, costs nothing at runtime after a bake).");
     }
 
+    [MenuItem("Tools/Scene Polish/Stone Lights/Set to Realtime (revert)", priority = 20)]
+    static void RealtimeStoneLights()
+    {
+        var lights = FindStoneLights();
+        if (Bail(lights.Length)) return;
+
+        Undo.RecordObjects(lights, "Stone Lights -> Realtime");
+        foreach (var l in lights)
+        {
+            l.lightmapBakeType = LightmapBakeType.Realtime;
+            l.enabled = true;
+        }
+        MarkDirty(lights);
+        Say($"{lights.Length} stone lights back to Realtime + enabled.\n\n" +
+            "Also run Window > Rendering > Lighting > (dropdown) > Clear Baked Data to drop the lightmaps.");
+    }
+
     [MenuItem("Tools/Scene Polish/Stone Lights/Set to Baked", priority = 21)]
     static void BakeStoneLights()
     {
