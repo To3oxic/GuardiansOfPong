@@ -132,49 +132,70 @@ public static class ScenePolishTools
     [MenuItem("Tools/Scene Polish/Create Clean Volume Profile", priority = 30)]
     static void CreateCleanVolumeProfile()
     {
-        var existing = AssetDatabase.LoadAssetAtPath<VolumeProfile>(GameProfilePath);
-        if (existing != null &&
-            !EditorUtility.DisplayDialog("Overwrite?",
-                $"{GameProfilePath} already exists. Rebuild it?", "Rebuild", "Cancel"))
-            return;
+        if (AssetDatabase.LoadAssetAtPath<VolumeProfile>(GameProfilePath) != null)
+        {
+            if (!EditorUtility.DisplayDialog("Overwrite?",
+                    $"{GameProfilePath} already exists. Rebuild it from scratch?", "Rebuild", "Cancel"))
+                return;
+            AssetDatabase.DeleteAsset(GameProfilePath);
+        }
 
-        var profile = existing != null ? existing : ScriptableObject.CreateInstance<VolumeProfile>();
-        if (existing != null)
-            foreach (var c in profile.components.ToArray()) profile.Remove(c.GetType());
-        else
-            AssetDatabase.CreateAsset(profile, GameProfilePath);
+        var dir = System.IO.Path.GetDirectoryName(GameProfilePath).Replace('\\', '/');
+        if (!AssetDatabase.IsValidFolder(dir))
+        {
+            System.IO.Directory.CreateDirectory(dir);
+            AssetDatabase.Refresh();
+        }
+
+        var profile = ScriptableObject.CreateInstance<VolumeProfile>();
+        AssetDatabase.CreateAsset(profile, GameProfilePath);
 
         // Deliberate, mobile-friendly stack. No motion blur / DoF / chromatic
         // aberration / film grain / lens flare — those are the expensive ones.
-        var tone = profile.Add<Tonemapping>(false);
-        tone.mode.Override(TonemappingMode.ACES);
-
-        var bloom = profile.Add<Bloom>(false);
-        bloom.threshold.Override(0.85f);
-        bloom.intensity.Override(1.2f);
-        bloom.scatter.Override(0.72f);
-        bloom.tint.Override(new Color(0.80f, 0.94f, 1f));
-
-        var vig = profile.Add<Vignette>(false);
-        vig.intensity.Override(0.30f);
-        vig.smoothness.Override(0.45f);
-
-        var col = profile.Add<ColorAdjustments>(false);
-        col.contrast.Override(8f);
-        col.saturation.Override(6f);
-        col.colorFilter.Override(new Color(1f, 0.99f, 0.96f));
-
-        var wb = profile.Add<WhiteBalance>(false);
-        wb.temperature.Override(-6f);
+        AddOverride<Tonemapping>(profile, t => t.mode.Override(TonemappingMode.ACES));
+        AddOverride<Bloom>(profile, b =>
+        {
+            b.threshold.Override(0.85f);
+            b.intensity.Override(1.2f);
+            b.scatter.Override(0.72f);
+            b.tint.Override(new Color(0.80f, 0.94f, 1f));
+        });
+        AddOverride<Vignette>(profile, v =>
+        {
+            v.intensity.Override(0.30f);
+            v.smoothness.Override(0.45f);
+        });
+        AddOverride<ColorAdjustments>(profile, c =>
+        {
+            c.contrast.Override(8f);
+            c.saturation.Override(6f);
+            c.colorFilter.Override(new Color(1f, 0.99f, 0.96f));
+        });
+        AddOverride<WhiteBalance>(profile, w => w.temperature.Override(-6f));
 
         EditorUtility.SetDirty(profile);
         AssetDatabase.SaveAssets();
+        AssetDatabase.ImportAsset(GameProfilePath, ImportAssetOptions.ForceUpdate);
+
         Selection.activeObject = profile;
         EditorGUIUtility.PingObject(profile);
-        Say($"Built {GameProfilePath} (Tonemapping ACES, Bloom, Vignette, Color Adjustments, White Balance).\n\n" +
+        Say($"Built {GameProfilePath} with {profile.components.Count} overrides " +
+            "(Tonemapping ACES, Bloom, Vignette, Color Adjustments, White Balance).\n\n" +
             "Assign it: select 'Global Magical Volume' in the Hierarchy -> Volume component -> " +
             "drag this asset into the Profile field (replacing DefaultVolumeProfile). " +
             "Tune values live on the asset while the Game view is visible.");
+    }
+
+    // Adds a volume override AND persists it as a sub-asset of the profile
+    // (VolumeProfile.Add alone leaves the component un-saved, so it vanishes on reload).
+    static void AddOverride<T>(VolumeProfile profile, System.Action<T> setup) where T : VolumeComponent
+    {
+        var comp = profile.Add<T>(false);
+        comp.name = typeof(T).Name;
+        comp.hideFlags = HideFlags.HideInHierarchy | HideFlags.HideInInspector;
+        AssetDatabase.AddObjectToAsset(comp, profile);
+        setup(comp);
+        EditorUtility.SetDirty(comp);
     }
 
     // ------------------------------------------------------------ lightmap prep
