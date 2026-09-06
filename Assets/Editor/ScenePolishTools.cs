@@ -106,6 +106,65 @@ public static class ScenePolishTools
         Say($"Deleted {lights.Length} stone light GameObjects.");
     }
 
+    // ------------------------------------------------------------ lightmap prep
+
+    // Ancestor names that mark non-moving scenery safe to bake.
+    static readonly string[] DecorRootHints =
+        { "Forest", "Magical Stone Paths", "Ground", "Environment", "Rocks", "Rock ", "Arena", "Decor", "Scenery" };
+
+    [MenuItem("Tools/Scene Polish/Lightmap Prep/Mark Decor Static", priority = 40)]
+    static void MarkDecorStatic()
+    {
+        var renderers = Object.FindObjectsByType<MeshRenderer>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        const StaticEditorFlags want = StaticEditorFlags.ContributeGI
+                                     | StaticEditorFlags.BatchingStatic
+                                     | StaticEditorFlags.OccludeeStatic
+                                     | StaticEditorFlags.ReflectionProbeStatic;
+
+        int flagged = 0, skippedDynamic = 0;
+        foreach (var r in renderers)
+        {
+            var go = r.gameObject;
+
+            // never bake anything that is spawned / driven at runtime
+            if (HasRuntimeBehaviour(go)) { skippedDynamic++; continue; }
+            if (!UnderDecorRoot(go.transform)) continue;
+
+            var flags = GameObjectUtility.GetStaticEditorFlags(go);
+            if ((flags & want) == want) continue;
+
+            Undo.RecordObject(go, "Mark Decor Static");
+            GameObjectUtility.SetStaticEditorFlags(go, flags | want);
+            flagged++;
+        }
+
+        EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
+        Say($"Marked {flagged} decor renderers static (ContributeGI + Batching). " +
+            $"Skipped {skippedDynamic} with runtime scripts.\n\n" +
+            "Next: Stone Lights > Set to Baked, then Window > Rendering > Lighting > Generate Lighting.");
+    }
+
+    static bool UnderDecorRoot(Transform t)
+    {
+        for (; t != null; t = t.parent)
+            foreach (var h in DecorRootHints)
+                if (t.name.Contains(h)) return true;
+        return false;
+    }
+
+    static bool HasRuntimeBehaviour(GameObject go)
+    {
+        foreach (var mb in go.GetComponentsInParent<MonoBehaviour>(true))
+        {
+            if (mb == null) continue;
+            var n = mb.GetType().Name;
+            if (n.Contains("Network") || n.Contains("Controller") || n.Contains("Ball")
+                || n.Contains("Paddle") || n.Contains("Guardian") || n.Contains("Manager"))
+                return true;
+        }
+        return false;
+    }
+
     // ---------------------------------------------------------------- helpers
 
     static Light[] FindStoneLights()
