@@ -835,7 +835,10 @@ public void RegisterPlayerDeck(ulong clientId, DeckPayload payload)
             return;
         }
 
-        Transform spawnT = (clientId == 1) ? client1SpawnPoint : client2SpawnPoint;
+        // Use player index (host=0, first client=1), not raw clientId, so the paddle
+        // spawns on the same side the camera and legend avatar use for this player.
+        int playerIndex = playerIndexMap.TryGetValue(clientId, out var pi) ? pi : 0;
+        Transform spawnT = (playerIndex == 0) ? client1SpawnPoint : client2SpawnPoint;
 
         // Instantiate new paddle from the stone's prefab
         var paddleGO = Instantiate(stone.AssociatedPaddlePrefab, spawnT.position, spawnT.rotation);
@@ -876,7 +879,8 @@ public void RegisterPlayerDeck(ulong clientId, DeckPayload payload)
             return;
         }
 
-        Transform stoneSpawnPoint = (clientId == 1) ? client1LegendStoneSpawnPoint : client2LegendStoneSpawnPoint;
+        int playerIndex = playerIndexMap.TryGetValue(clientId, out var pi) ? pi : 0;
+        Transform stoneSpawnPoint = (playerIndex == 0) ? client1LegendStoneSpawnPoint : client2LegendStoneSpawnPoint;
 
         Vector3 stonePosition = stoneSpawnPoint.position;
         Quaternion stoneRotation = stoneSpawnPoint.rotation;

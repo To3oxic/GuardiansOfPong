@@ -102,6 +102,15 @@ public class GameStartAnimationController : NetworkBehaviour
 
     private IEnumerator PlayAnimationSequence()
     {
+        // Wait (briefly) for this client's paddle to spawn so the camera can be
+        // placed on the correct side. Falls through after the timeout.
+        float wait = 0f;
+        while (GetLocalPaddle() == null && wait < 3f)
+        {
+            wait += Time.deltaTime;
+            yield return null;
+        }
+
         // Setup initial positions
         SetupInitialPositions();
 
@@ -119,6 +128,23 @@ public class GameStartAnimationController : NetworkBehaviour
 
         // 5. Client animation sequence complete
         // Note: Server handles the OnAnimationComplete callback via ServerAnimationTimer
+    }
+
+    /// <summary>
+    /// The transform of the paddle owned by this client, or null if it has not spawned yet.
+    /// </summary>
+    private Transform GetLocalPaddle()
+    {
+        var nm = Unity.Netcode.NetworkManager.Singleton;
+        if (nm == null) return null;
+
+        ulong me = nm.LocalClientId;
+        foreach (var paddle in FindObjectsByType<PaddleController>(FindObjectsSortMode.None))
+        {
+            if (paddle != null && paddle.OwnerClientId == me)
+                return paddle.transform;
+        }
+        return null;
     }
 
     private void SetupInitialPositions()
@@ -152,9 +178,11 @@ public class GameStartAnimationController : NetworkBehaviour
         // Set camera to final position and rotation instantly (no animation)
         if (gameCamera != null)
         {
-            // Determine which client this is
-            bool isClient1 = GameManager.IsClientOne;
-            ulong localClientId = Unity.Netcode.NetworkManager.Singleton.LocalClientId;
+            // Which side is this client on? Prefer the local paddle's actual position
+            // (client 1 = +z, client 2 = -z) and fall back to the networked flag.
+            Transform localPaddle = GetLocalPaddle();
+            bool isClient1 = localPaddle != null ? localPaddle.position.z > 0f : GameManager.IsClientOne;
+
             Vector3 finalPosition = isClient1 ? client1FinalPosition : client2FinalPosition;
             Vector3 finalRotation = isClient1 ? client1FinalRotation : client2FinalRotation;
 
