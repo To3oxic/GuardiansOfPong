@@ -1,180 +1,929 @@
-// NetworkUI.cs (Updated to support dedicated server-client model)
+// NetworkUI: quick-match flow with detailed logs.
+// Client tries to connect; if none found, becomes host. Decks are sent via Named Messages.
+// When server has both decks, it loads GameScene. After load completes, it invokes GameManager to start.
+using System.Collections;
+using System.Collections.Generic;
+using System.Text;
+using Unity.Collections;
 using Unity.Netcode;
+using Unity.Netcode.Transports.UTP;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
-using UnityEngine.SceneManagement; // For LoadSceneMode
-using System.Collections.Generic; // For Dictionary
-using TMPro; // If using TextMeshPro
+using TMPro;
+using UnityEngine.Networking;
 
-public class NetworkUI : NetworkBehaviour
+public class NetworkUI : MonoBehaviour
 {
     public static NetworkUI Instance { get; private set; }
 
-    [Header("Network Control Panel")]
+    [Header("UI (optional)")]
+    public GameObject networkButtonsPanel;
     public Button hostButton;
     public Button clientButton;
-    // public Button serverButton; // Uncomment if you want a dedicated server button from UI
-    public GameObject networkButtonsPanel; // Panel with Host/Client buttons. Assign in Inspector.
-    public TextMeshProUGUI statusText;     // Assign in Inspector.
+    public TextMeshProUGUI statusText;
 
-    private const string GameSceneName = "GameScene"; // Ensure this matches your game scene's name
+    [Header("Quick Match")]
+    public bool autoQuickMatch = true;
+    [SerializeField] string hostAddress = "127.0.0.1";
+    [SerializeField] ushort port = 7777;
+    [SerializeField] float clientConnectTimeoutSeconds = 4f;
+
+    [Header("Scenes")]
+    [SerializeField] string gameSceneName = "GameScene";
+
+    [Header("Backend Configuration")]
+    [SerializeField] string backendUrl = "http://localhost:8000";
+
+    // Temporary store on server (clientId -> DeckPayload)
+    public static Dictionary<ulong, DeckPayload> TempPlayerDecks = new Dictionary<ulong, DeckPayload>();
 
     private DeckPayload _pendingDeckPayload;
+    private Coroutine _quickMatchCo;
+    private bool _isMatching;
+    private bool _matchStartTriggered;
+    private string _player1Id = null;
+    private string _player2Id = null;
+    private bool _decksLoadedFromBackend = false;
+
+    // Message name for deck submission
+    private const string DeckSubmitMsg = "DeckSubmit";
 
     void Awake()
     {
-        if (Instance == null)
-        {
-            Instance = this;
-            // If this GameObject is not already persistent via another script (like DontDestroyOnLoadHelper)
-            // and you want NetworkUI to persist (e.g., if RPCs are here and it's not on NetworkManager_Persistent),
-            // then uncomment the line below. 
-            // DontDestroyOnLoad(gameObject); 
-        }
-        else if (Instance != this)
-        {
-            Destroy(gameObject);
-            return;
-        }
+        Debug.Log("[NetworkUI] Awake called");
+
+        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
+
+        // Parse command line arguments for player IDs
+        Debug.Log("[NetworkUI] Parsing command-line arguments in Awake");
+        ParseCommandLineArguments();
+        Debug.Log($"[NetworkUI] After parse: player1Id={_player1Id}, player2Id={_player2Id}");
     }
 
     void Start()
     {
-        if (hostButton != null) hostButton.onClick.AddListener(StartHostAndInitiate);
-        if (clientButton != null) clientButton.onClick.AddListener(StartClientAndInitiate);
-        // if (serverButton != null) serverButton.onClick.AddListener(StartDedicatedServer);
+        Debug.Log("[NetworkUI] Start() called");
+        Debug.Log($"[NetworkUI] NetworkManager.Singleton: {NetworkManager.Singleton}");
 
-        // This panel should be initially inactive, activated by MainMenuController
-        if (networkButtonsPanel != null) networkButtonsPanel.SetActive(false);
-        gameObject.SetActive(false); // The root NetworkUI object itself starts inactive
-    }
-
-    void OnDestroy() // Clean up callbacks
-    {
-        if (NetworkManager.Singleton != null)
+        if (NetworkManager.Singleton == null)
         {
-            NetworkManager.Singleton.OnClientConnectedCallback -= OnClientConnectedToServer;
-            NetworkManager.Singleton.OnClientDisconnectCallback -= OnClientDisconnectedFromServer;
+            Debug.LogError("[NetworkUI] NetworkManager.Singleton is null! Returning.");
+            return;
         }
-    }
 
-    public void InitiateMatchmakingAndLoadScene(DeckPayload payload)
-    {
-        _pendingDeckPayload = payload;
-        gameObject.SetActive(true); // Show this NetworkUI manager
-        if (networkButtonsPanel != null) networkButtonsPanel.SetActive(true); // Show Host/Client buttons
+        EnsureTransport();
 
-        if (statusText != null)
+        var nm = NetworkManager.Singleton;
+
+        // Approve everyone if approval is enabled (prevents instant kick)
+        if (nm.NetworkConfig != null && nm.NetworkConfig.ConnectionApproval)
         {
-            statusText.text = "Select Host or Client to proceed.";
-            statusText.gameObject.SetActive(true);
+            nm.ConnectionApprovalCallback = OnApprovalCheck;
         }
-        Debug.Log("[NetworkUI] Initiating matchmaking. Payload received.");
-    }
 
-    void StartHostAndInitiate()
-    {
-        if (NetworkManager.Singleton.StartHost())
+        nm.OnClientConnectedCallback += OnClientConnectedToServer;
+
+        // Register server handler for deck submissions (server only)
+        if (nm.IsServer && nm.CustomMessagingManager != null)
         {
-            Debug.Log("[NetworkUI] Host started successfully.");
-            if (statusText != null) statusText.text = "Host started. Submitting deck & loading game...";
+            nm.CustomMessagingManager.RegisterNamedMessageHandler(DeckSubmitMsg, OnServerReceiveDeckMessage);
+        }
 
-            // Host acts as a client too, so its deck submission goes through the same RPC path
-            // The RPC should be called by the client part of the host after connection is established locally.
-            // For a host, OnClientConnectedToServer will be called immediately with its own ClientId.
-            // So, we can register for that, or for simplicity for host, call RPC directly then load scene.
-            // Let's register for callback for consistency.
-            NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnectedToServer;
-            // LoadGameScene(); // Scene load will be triggered after deck submission confirmation (implicitly via OnClientConnectedToServer for host)
+        // NGO scene event (only valid when scene management enabled)
+        if (nm.NetworkConfig != null && nm.NetworkConfig.EnableSceneManagement && nm.SceneManager != null)
+        {
+            Debug.Log("[NetworkUI] Using NGO scene management events");
+            nm.SceneManager.OnLoadEventCompleted += OnLoadEventCompleted;
         }
         else
         {
-            Debug.LogError("[NetworkUI] Failed to start host.");
-            if (statusText != null) statusText.text = "Failed to start host.";
+            Debug.Log("[NetworkUI] Using Unity scene loading events (fallback)");
+            SceneManager.sceneLoaded += OnUnitySceneLoaded;
         }
-        if (networkButtonsPanel != null) networkButtonsPanel.SetActive(false);
+
+        if (clientButton) clientButton.onClick.AddListener(() => StartCoroutine(StartClientAndInitiateCo()));
+
+        Debug.Log($"[NetworkUI] About to check for headless mode");
+        Debug.Log($"[NetworkUI] Application.isBatchMode: {Application.isBatchMode}");
+        Debug.Log($"[NetworkUI] CommandLineArgs: {string.Join(" ", System.Environment.GetCommandLineArgs())}");
+
+        // Don't start server here - let HeadlessServer handle it
+        // HeadlessServer.cs will handle the -server flag
+        if (System.Array.Exists(System.Environment.GetCommandLineArgs(), element => element == "-server"))
+        {
+            Debug.Log("[NetworkUI] Server mode detected - HeadlessServer will handle initialization");
+            // Hide any UI panels for headless
+            if (networkButtonsPanel) networkButtonsPanel.SetActive(false);
+        }
+        else
+        {
+            Debug.Log("[NetworkUI] Not in server mode - showing client UI");
+            // Show UI for client mode
+            if (networkButtonsPanel != null && !autoQuickMatch)
+            {
+                networkButtonsPanel.SetActive(true);
+            }
+        }
     }
 
-    void StartClientAndInitiate()
+    void OnDestroy()
     {
-        if (networkButtonsPanel != null) networkButtonsPanel.SetActive(false);
-        if (statusText != null) statusText.text = "Attempting to connect to server...";
-        NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnectedToServer;
-        NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnectedFromServer;
-        NetworkManager.Singleton.StartClient();
+        var nm = NetworkManager.Singleton;
+        if (nm != null)
+        {
+            nm.OnClientConnectedCallback -= OnClientConnectedToServer;
+
+
+            if (nm.SceneManager != null)
+                nm.SceneManager.OnLoadEventCompleted -= OnLoadEventCompleted;
+
+            // Unregister on server
+            if (nm.IsServer && nm.CustomMessagingManager != null)
+                nm.CustomMessagingManager.UnregisterNamedMessageHandler(DeckSubmitMsg);
+
+            // clear approval callback
+            if (nm.NetworkConfig != null && nm.NetworkConfig.ConnectionApproval)
+                nm.ConnectionApprovalCallback = null;
+
+            // Only unsubscribe if we were using Unity's scene events (not NGO)
+            if (nm.NetworkConfig == null || !nm.NetworkConfig.EnableSceneManagement || nm.SceneManager == null)
+            {
+                SceneManager.sceneLoaded -= OnUnitySceneLoaded;
+            }
+        }
+        else
+        {
+            SceneManager.sceneLoaded -= OnUnitySceneLoaded;
+        }
+    }
+
+    // Called by MainMenuController
+    public void InitiateMatchmakingAndLoadScene(DeckPayload payload)
+    {
+        _pendingDeckPayload = payload;
+        if (_isMatching) return;
+
+        if (!autoQuickMatch && networkButtonsPanel != null && (hostButton != null || clientButton != null))
+        {
+            networkButtonsPanel.SetActive(true);
+            return;
+        }
+
+        if (_quickMatchCo != null) StopCoroutine(_quickMatchCo);
+        _quickMatchCo = StartCoroutine(QuickMatchFlow());
+    }
+
+
+
+    // Called by MainMenuController to start a dedicated server
+    public void StartDedicatedServer()
+    {
+        if (NetworkManager.Singleton == null) return;
+
+        if (NetworkManager.Singleton.IsListening)
+        {
+            NetworkManager.Singleton.Shutdown();
+        }
+
+        StartCoroutine(StartDedicatedServerRoutine());
+    }
+
+    // Called by MainMenuController to stop the dedicated server
+    public void StopDedicatedServer()
+    {
+        if (NetworkManager.Singleton?.IsListening == true)
+        {
+            NetworkManager.Singleton.Shutdown();
+            TempPlayerDecks.Clear();
+            _matchStartTriggered = false;
+            _isMatching = false;
+        }
+    }
+
+    // Called after a match ends to reset for next match (for dedicated servers)
+    public void ResetForNextMatch()
+    {
+        TempPlayerDecks.Clear();
+        _matchStartTriggered = false;
+        _isMatching = false;
+    }
+
+    private IEnumerator QuickMatchFlow()
+    {
+        _isMatching = true;
+        _matchStartTriggered = false;
+        TempPlayerDecks.Clear();
+
+        yield return EnsureStopped();
+
+        ConfigureTransport(hostAddress, port);
+
+        bool connected = false;
+        bool failed = false;
+        void onConnect(ulong id) { if (id == NetworkManager.Singleton.LocalClientId) connected = true; }
+        void onDisconnect(ulong id) { if (id == NetworkManager.Singleton.LocalClientId) failed = true; }
+
+        var nm = NetworkManager.Singleton;
+        nm.OnClientConnectedCallback += onConnect;
+        nm.OnClientDisconnectCallback += onDisconnect;
+
+        if (!nm.StartClient())
+        {
+            failed = true;
+        }
+
+        float t = 0f;
+        while (!connected && !failed && t < clientConnectTimeoutSeconds)
+        {
+            t += Time.unscaledDeltaTime;
+            yield return null;
+        }
+
+        nm.OnClientConnectedCallback -= onConnect;
+        nm.OnClientDisconnectCallback -= onDisconnect;
+
+        if (connected && nm.IsClient && !nm.IsServer)
+        {
+            SendDeckToServerViaMessage(_pendingDeckPayload);
+            _isMatching = false;
+            yield break;
+        }
+
+        _isMatching = false;
+    }
+
+    private IEnumerator StartDedicatedServerRoutine()
+    {
+        Debug.Log("[NetworkUI] StartDedicatedServerRoutine START");
+
+        yield return EnsureStopped();
+
+        Debug.Log("[NetworkUI] After EnsureStopped");
+
+        // Configure transport to bind on all interfaces
+        ConfigureTransport("0.0.0.0", port);
+
+        Debug.Log("[NetworkUI] About to call StartServer()");
+
+        // Start server-only (not host, just pure server)
+        bool serverStarted = false;
+        try
+        {
+            serverStarted = NetworkManager.Singleton.StartServer();
+            Debug.Log($"[NetworkUI] StartServer() returned: {serverStarted}");
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"[NetworkUI] Exception calling StartServer(): {e}");
+            yield break;
+        }
+
+        if (serverStarted)
+        {
+            Debug.Log("[NetworkUI] Dedicated server started successfully");
+
+            // Register server message handlers
+            RegisterServerMessageHandlers();
+
+            // Clear any existing player decks
+            TempPlayerDecks.Clear();
+
+            // Reset match flags for new matches
+            _matchStartTriggered = false;
+            _isMatching = false;
+
+            // Parse command-line arguments for player IDs
+            Debug.Log("[NetworkUI] Parsing command-line arguments for player IDs");
+            ParseCommandLineArguments();
+
+            Debug.Log($"[NetworkUI] Parsed: player1Id={_player1Id}, player2Id={_player2Id}");
+
+            // Don't fetch decks here - wait for clients to connect first
+            // They will be fetched in OnClientConnectedToServer when both clients are connected
+            Debug.Log("[NetworkUI] Server ready, waiting for clients to connect...");
+        }
+        else
+        {
+            Debug.LogError("[NetworkUI] Failed to start dedicated server");
+        }
+
+        // Hide network buttons panel if showing
+        if (networkButtonsPanel) networkButtonsPanel.SetActive(false);
+
+        Debug.Log("[NetworkUI] StartDedicatedServerRoutine COMPLETE");
+    }
+
+
+
+    private IEnumerator EnsureStopped()
+    {
+        var nm = NetworkManager.Singleton;
+        if (nm != null && nm.IsListening)
+        {
+
+
+            nm.Shutdown();
+        }
+
+        float t = 0f;
+        while (nm != null && nm.IsListening && t < 2f)
+        {
+            t += Time.unscaledDeltaTime;
+            yield return null;
+        }
+    }
+
+    private void ConfigureTransport(string address, ushort p)
+    {
+        var utp = EnsureTransport();
+        if (utp == null)
+        {
+            return;
+        }
+
+        // Configure connection data
+        utp.SetConnectionData(address, p);
+
+        // Increase buffer sizes to prevent packet overflow
+        utp.MaxPacketQueueSize = 512;  // Increased from default 128
+        utp.MaxPayloadSize = 6000;     // Increased payload size
+
+        Debug.Log($"[NetworkUI] Configured transport: {address}:{p}, MaxPacketQueueSize: {utp.MaxPacketQueueSize}");
+    }
+
+    private UnityTransport EnsureTransport()
+    {
+        var nm = NetworkManager.Singleton;
+        if (nm == null) return null;
+
+        // Ensure NetworkManager persists across scenes
+        if (nm.gameObject.scene.name != "DontDestroyOnLoad")
+        {
+            DontDestroyOnLoad(nm.gameObject);
+            Debug.Log("[NetworkUI] Set NetworkManager to persist across scenes");
+        }
+
+        var utp = nm.GetComponent<UnityTransport>();
+        if (utp == null)
+        {
+            utp = nm.gameObject.AddComponent<UnityTransport>();
+        }
+
+        if (nm.NetworkConfig.NetworkTransport != utp)
+        {
+            nm.NetworkConfig.NetworkTransport = utp;
+        }
+
+        return utp;
+    }
+
+
+
+    private IEnumerator StartClientAndInitiateCo()
+    {
+        yield return EnsureStopped();
+
+        ConfigureTransport(hostAddress, port);
+        if (!NetworkManager.Singleton.StartClient())
+        {
+
+
+            yield break;
+        }
+
+        if (networkButtonsPanel) networkButtonsPanel.SetActive(false);
     }
 
     private void OnClientConnectedToServer(ulong clientId)
     {
-        // This callback handles both true clients and the host acting as a client.
-        if (clientId == NetworkManager.Singleton.LocalClientId)
+        var nm = NetworkManager.Singleton;
+        if (nm == null) return;
+
+        if (clientId == nm.LocalClientId && nm.IsClient && !nm.IsServer)
         {
-            Debug.Log($"[NetworkUI] Local client (ID: {clientId}) connected to server. Submitting deck info.");
-            if (statusText != null) statusText.text = "Connected! Submitting deck...";
-            SubmitDeckInfoServerRpc(_pendingDeckPayload);
-            // Client-side does not load the scene directly; server dictates scene transitions.
-        }
-        // Only remove for the specific client that connected, or it might affect other late joiners if any
-        // For this simple setup, removing it once the local client is handled is fine.
-        if (clientId == NetworkManager.Singleton.LocalClientId)
-        {
-            NetworkManager.Singleton.OnClientConnectedCallback -= OnClientConnectedToServer;
-            NetworkManager.Singleton.OnClientDisconnectCallback -= OnClientDisconnectedFromServer; // Also unregister disconnect here if solely tied to this connection attempt
+
+            StartCoroutine(SendDeckAfterHandshake());
+            return;
         }
 
-        // If this is the server (host) getting its own connection callback, it can now load the scene.
-        if (IsServer && clientId == NetworkManager.ServerClientId) // ServerClientId is LocalClientId for host
+        // Server side: a client connected
+        if (nm.IsServer && clientId != NetworkManager.ServerClientId)
+        {
+            Debug.Log($"[NetworkUI] Client {clientId} connected. Connected count: {nm.ConnectedClientsIds.Count}");
+
+            // Check if both players are now connected (server + 1 client = 2)
+            if (nm.ConnectedClientsIds.Count >= 2 && !_decksLoadedFromBackend)
+            {
+                Debug.Log("[NetworkUI] Both clients connected! Starting to fetch decks from backend...");
+                StartCoroutine(FetchPlayerDecksFromBackendWhenReady());
+            }
+        }
+    }
+
+    private IEnumerator FetchPlayerDecksFromBackendWhenReady()
+    {
+        // Wait a moment for all connections to stabilize
+        yield return new WaitForSeconds(0.5f);
+
+        var nm = NetworkManager.Singleton;
+
+        // Verify we still have 2 connected clients
+        if (nm.ConnectedClientsIds.Count < 2)
+        {
+            Debug.LogWarning("[NetworkUI] Not enough clients connected anymore");
+            yield break;
+        }
+
+        if (!string.IsNullOrEmpty(_player1Id) && !string.IsNullOrEmpty(_player2Id))
+        {
+            Debug.Log($"[NetworkUI] Fetching decks from backend for players: {_player1Id}, {_player2Id}");
+            yield return StartCoroutine(FetchPlayerDecksFromBackend());
+            Debug.Log("[NetworkUI] Deck fetching complete");
+        }
+        else
+        {
+            Debug.Log("[NetworkUI] No player IDs from backend - waiting for client deck submissions");
+        }
+    }
+
+    private IEnumerator SendDeckAfterHandshake()
+    {
+        // Wait a couple of frames to avoid sending too early
+        yield return null; yield return null;
+
+        var nm = NetworkManager.Singleton;
+        if (nm != null && nm.IsClient && nm.IsConnectedClient)
+        {
+            SendDeckToServerViaMessage(_pendingDeckPayload);
+            // Resend until scene switches or timeout (robust against message loss)
+            StartCoroutine(ResendDeckUntilSceneChange(5f, 0.5f));
+        }
+        else
+        {
+
+        }
+    }
+
+    private IEnumerator ResendDeckUntilSceneChange(float timeoutSeconds, float intervalSeconds)
+    {
+        float t = 0f;
+        while (SceneManager.GetActiveScene().name != gameSceneName &&
+               NetworkManager.Singleton != null &&
+               NetworkManager.Singleton.IsClient &&
+               NetworkManager.Singleton.IsConnectedClient &&
+               t < timeoutSeconds)
+        {
+            yield return new WaitForSecondsRealtime(intervalSeconds);
+            t += intervalSeconds;
+
+            SendDeckToServerViaMessage(_pendingDeckPayload);
+        }
+
+    }
+
+    // CLIENT -> SERVER: send deck via named message (UTF8 bytes with explicit length)
+    private void SendDeckToServerViaMessage(DeckPayload payload)
+    {
+        var nm = NetworkManager.Singleton;
+        if (nm == null || nm.CustomMessagingManager == null)
+        {
+
+            return;
+        }
+
+        string json = JsonUtility.ToJson(payload);
+        byte[] bytes = Encoding.UTF8.GetBytes(json);
+
+        using (var writer = new FastBufferWriter(sizeof(int) + bytes.Length, Allocator.Temp))
+        {
+            writer.WriteValueSafe(bytes.Length);
+            writer.WriteBytesSafe(bytes);
+            nm.CustomMessagingManager.SendNamedMessage(DeckSubmitMsg, NetworkManager.ServerClientId, writer);
+        }
+
+    }
+
+    // SERVER: receive deck from client (reads explicit length + UTF8 bytes)
+    private void OnServerReceiveDeckMessage(ulong senderClientId, FastBufferReader reader)
+    {
+        if (!NetworkManager.Singleton.IsServer) return;
+
+        if (!reader.TryBeginRead(sizeof(int)))
+        {
+
+            return;
+        }
+
+        reader.ReadValueSafe(out int len);
+        if (len <= 0 || !reader.TryBeginRead(len))
+        {
+
+            return;
+        }
+
+        byte[] bytes = new byte[len];
+        reader.ReadBytesSafe(ref bytes, len);
+        string json = Encoding.UTF8.GetString(bytes);
+
+        var payload = JsonUtility.FromJson<DeckPayload>(json);
+        TempPlayerDecks[senderClientId] = payload;
+
+
+        EvaluateStartCondition("OnServerReceiveDeckMessage");
+    }
+
+    // SERVER: check if we have both host and one client deck, then load scene (or start directly if already in it)
+    private void EvaluateStartCondition(string where)
+    {
+        if (!NetworkManager.Singleton.IsServer) return;
+
+        var nm = NetworkManager.Singleton;
+        bool isDedicatedServer = nm.IsServer && !nm.IsHost && !nm.IsClient;
+
+        bool haveEnoughPlayers = false;
+
+        if (isDedicatedServer)
+        {
+            // Dedicated server: need 2 client decks (no host deck)
+            int clientDecks = 0;
+            foreach (var id in nm.ConnectedClientsIds)
+            {
+                if (TempPlayerDecks.ContainsKey(id))
+                {
+                    clientDecks++;
+                }
+            }
+            haveEnoughPlayers = clientDecks >= 2;
+
+        }
+        else
+        {
+            // Host mode: need host deck + 1 client deck
+            bool haveHost = TempPlayerDecks.ContainsKey(NetworkManager.ServerClientId);
+            bool haveOther = false;
+            foreach (var id in nm.ConnectedClientsIds)
+            {
+                if (id != NetworkManager.ServerClientId && TempPlayerDecks.ContainsKey(id))
+                {
+                    haveOther = true;
+                    break;
+                }
+            }
+            haveEnoughPlayers = haveHost && haveOther;
+
+        }
+
+        if (!haveEnoughPlayers) return;
+
+        if (_matchStartTriggered) return;
+        _matchStartTriggered = true;
+
+        var activeScene = SceneManager.GetActiveScene().name;
+        if (activeScene == gameSceneName)
+        {
+
+            StartMatchOnServer();
+        }
+        else
         {
             LoadGameScene();
         }
     }
 
-    private void OnClientDisconnectedFromServer(ulong clientId)
+    // SERVER: load the game scene for everyone
+    private void LoadGameScene()
     {
-        if (clientId == NetworkManager.Singleton.LocalClientId)
+        if (!NetworkManager.Singleton.IsServer) return;
+        Debug.Log($"[NetworkUI] LoadGameScene called - gameSceneName: {gameSceneName}");
+
+        if (!NetworkManager.Singleton.NetworkConfig.EnableSceneManagement)
         {
-            Debug.LogError("[NetworkUI] Failed to connect to the server or disconnected.");
-            if (statusText != null) statusText.text = "Failed to connect or disconnected. Please try again.";
-            // TODO: Show main menu or an error panel more gracefully
-            // UIManager.Instance.ShowScreen("MainMenuScreen"); 
-            // gameObject.SetActive(false); // Hide NetworkUI
-            if (networkButtonsPanel != null) networkButtonsPanel.SetActive(true); // Show buttons again to retry
+            Debug.LogError("[NetworkUI] Scene management is disabled in NetworkConfig!");
+            _matchStartTriggered = false;
+            return;
         }
-        // Unsubscribe to prevent multiple calls if re-attempting connection
-        NetworkManager.Singleton.OnClientConnectedCallback -= OnClientConnectedToServer;
-        NetworkManager.Singleton.OnClientDisconnectCallback -= OnClientDisconnectedFromServer;
-    }
 
-    [ServerRpc(RequireOwnership = false)]
-    public void SubmitDeckInfoServerRpc(DeckPayload payload, ServerRpcParams rpcParams = default)
-    {
-        ulong senderClientId = rpcParams.Receive.SenderClientId;
-        Debug.Log($"[NetworkUI - Server] Received deck from Client ID: {senderClientId}. Legend: {payload.castingLegendName}, Cards: {payload.cardNames.Count}");
-        StorePayloadForGameManager(senderClientId, payload);
-
-        // Server logic after receiving a deck. For example, check if all expected players submitted.
-        // If this is the host submitting its own deck (clientId == NetworkManager.ServerClientId),
-        // and it's the first/only one, it might then load the scene (if not already triggered by OnClientConnectedToServer for host).
-        // This example assumes the host's OnClientConnectedToServer callback triggers scene load for simplicity.
-    }
-
-    // This needs to be a robust, server-authoritative way for GameManager to get this data.
-    // Static dictionary is a placeholder for simplicity. A proper GameState manager is better.
-    public static Dictionary<ulong, DeckPayload> TempPlayerDecks = new Dictionary<ulong, DeckPayload>();
-    private void StorePayloadForGameManager(ulong clientId, DeckPayload payload)
-    {
-        TempPlayerDecks[clientId] = payload;
-        Debug.Log($"[NetworkUI - Server] Stored payload for client {clientId}. Total stored: {TempPlayerDecks.Count}");
-    }
-
-    void LoadGameScene()
-    {
-        if (IsServer)
+        if (!IsSceneInBuild(gameSceneName))
         {
-            Debug.Log("[NetworkUI] Server is loading GameScene for all clients.");
-            if (statusText != null) statusText.text = "Loading game...";
-            // Ensure all necessary data is ready before loading (e.g., all players submitted decks if that's a requirement)
-            NetworkManager.Singleton.SceneManager.LoadScene(GameSceneName, LoadSceneMode.Single);
+            Debug.LogError($"[NetworkUI] Scene '{gameSceneName}' is not in build settings!");
+            _matchStartTriggered = false;
+            return;
+        }
+
+        Debug.Log($"[NetworkUI] Loading scene: {gameSceneName}");
+        NetworkManager.Singleton.SceneManager.LoadScene(gameSceneName, LoadSceneMode.Single);
+    }
+
+    // NGO Scene load complete (all clients)
+    private void OnLoadEventCompleted(string sceneName, LoadSceneMode mode, List<ulong> clientsCompleted, List<ulong> clientsTimedOut)
+    {
+        if (!NetworkManager.Singleton.IsServer) return;
+        if (sceneName != gameSceneName) return;
+
+        Debug.Log($"[NetworkUI] OnLoadEventCompleted: {sceneName}, clients completed: {clientsCompleted.Count}, timed out: {clientsTimedOut.Count}");
+        StartMatchOnServer();
+    }
+
+    // Fallback if NGO event doesn’t fire (or scene mgmt off)
+    private void OnUnitySceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsServer) return;
+        if (scene.name != gameSceneName) return;
+
+
+        StartMatchOnServer();
+    }
+
+    // SERVER: find GameManager in GameScene and kick off match
+    private void StartMatchOnServer()
+    {
+        if (!NetworkManager.Singleton || !NetworkManager.Singleton.IsServer)
+        {
+            Debug.LogError("[NetworkUI] StartMatchOnServer: NetworkManager not available or not server!");
+            return;
+        }
+        Debug.Log("[NetworkUI] StartMatchOnServer called, starting coroutine...");
+        StartCoroutine(StartMatchServerRoutine());
+    }
+
+    private System.Collections.IEnumerator StartMatchServerRoutine()
+    {
+        Debug.Log("[NetworkUI] StartMatchServerRoutine started - looking for GameManager...");
+
+        // Wait for GameManager to exist and be network-spawned
+        const float timeout = 5f;
+        float t = 0f;
+        GameManager gm = null;
+
+        // Also ensure NetworkManager is alive on the server
+        while (t < timeout)
+        {
+            if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsServer)
+            {
+                Debug.LogError("[NetworkUI] NetworkManager lost during routine!");
+                yield break;
+            }
+            else
+            {
+                gm = UnityEngine.Object.FindFirstObjectByType<GameManager>();
+                if (gm != null)
+                {
+                    Debug.Log($"[NetworkUI] Found GameManager: {gm.name}");
+                    // If there is a NetworkObject, prefer to wait until spawned
+                    var no = gm.GetComponent<Unity.Netcode.NetworkObject>();
+                    if (no == null)
+                    {
+                        Debug.Log("[NetworkUI] GameManager has no NetworkObject component - proceeding");
+                        break;
+                    }
+                    else if (no.IsSpawned)
+                    {
+                        Debug.Log("[NetworkUI] GameManager NetworkObject is spawned - proceeding");
+                        break;
+                    }
+                    else
+                    {
+                        Debug.Log($"[NetworkUI] Waiting for GameManager NetworkObject to spawn... (t={t:F2})");
+                    }
+                }
+                else
+                {
+                    Debug.Log($"[NetworkUI] GameManager not found yet... (t={t:F2})");
+                }
+            }
+
+            t += Time.unscaledDeltaTime;
+            yield return null;
+        }
+
+        if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsServer)
+        {
+            Debug.LogError("[NetworkUI] NetworkManager lost after timeout!");
+            yield break;
+        }
+
+        gm = gm ?? UnityEngine.Object.FindFirstObjectByType<GameManager>();
+        if (gm == null)
+        {
+            Debug.LogError("[NetworkUI] GameManager still not found after timeout - cannot start match!");
+            yield break;
+        }
+
+        Debug.Log($"[NetworkUI] GameManager found: {gm.name}, checking server status...");
+
+        // Extra diagnostics to catch the "client ignored" case
+        if (!gm.IsServer)
+        {
+            Debug.LogError($"[NetworkUI] GameManager.IsServer = false! Cannot initialize match.");
+            yield break;
+        }
+
+
+
+        Debug.Log("[NetworkUI] Sending InitializeFromDecks and StartMatch messages to GameManager...");
+        gm.SendMessage("InitializeFromDecks", TempPlayerDecks, SendMessageOptions.DontRequireReceiver);
+
+    }
+
+    private bool IsSceneInBuild(string nameOrPath)
+    {
+        for (int i = 0; i < SceneManager.sceneCountInBuildSettings; i++)
+        {
+            var path = SceneUtility.GetScenePathByBuildIndex(i);
+            var fileNoExt = System.IO.Path.GetFileNameWithoutExtension(path);
+            if (string.Equals(fileNoExt, nameOrPath, System.StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(path, nameOrPath, System.StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+
+    // Approve-all callback (prevents instant disconnects when Connection Approval is enabled)
+    private void OnApprovalCheck(NetworkManager.ConnectionApprovalRequest request,
+                                 NetworkManager.ConnectionApprovalResponse response)
+    {
+        response.Approved = true;
+        response.CreatePlayerObject = false; // we spawn our own objects
+        response.Pending = false;
+
+    }
+
+    private void RegisterServerMessageHandlers()
+    {
+        var nm = NetworkManager.Singleton;
+        if (nm == null || !nm.IsServer) return;
+
+        if (nm.CustomMessagingManager != null)
+        {
+            // Safe to unregister first in case it was already set
+            nm.CustomMessagingManager.UnregisterNamedMessageHandler(DeckSubmitMsg);
+            nm.CustomMessagingManager.RegisterNamedMessageHandler(DeckSubmitMsg, OnServerReceiveDeckMessage);
+
+        }
+    }
+
+    private void ParseCommandLineArguments()
+    {
+        string[] args = System.Environment.GetCommandLineArgs();
+        foreach (string arg in args)
+        {
+            if (arg.StartsWith("-player1Id="))
+            {
+                _player1Id = arg.Substring("-player1Id=".Length);
+                Debug.Log($"[NetworkUI] Player 1 ID: {_player1Id}");
+            }
+            if (arg.StartsWith("-player2Id="))
+            {
+                _player2Id = arg.Substring("-player2Id=".Length);
+                Debug.Log($"[NetworkUI] Player 2 ID: {_player2Id}");
+            }
+        }
+    }
+
+    private IEnumerator FetchPlayerDecksFromBackend()
+    {
+        if (string.IsNullOrEmpty(_player1Id) || string.IsNullOrEmpty(_player2Id))
+        {
+            Debug.LogError("[NetworkUI] Missing player IDs - cannot fetch decks");
+            yield break;
+        }
+
+        DeckPayload deck1 = null;
+        DeckPayload deck2 = null;
+
+        // Fetch player 1 deck
+        yield return StartCoroutine(FetchDeckFromBackend(_player1Id, (deck) =>
+        {
+            deck1 = deck;
+        }));
+
+        // Fetch player 2 deck
+        yield return StartCoroutine(FetchDeckFromBackend(_player2Id, (deck) =>
+        {
+            deck2 = deck;
+        }));
+
+        if (deck1 != null && deck2 != null)
+        {
+            // Store in TempPlayerDecks using actual connected client IDs
+            // The headless server (host) has ServerClientId
+            // The first connected client will have their own client ID
+
+            var connectedIds = new List<ulong>(NetworkManager.Singleton.ConnectedClientsIds);
+            connectedIds.Sort((a, b) =>
+            {
+                // Ensure ServerClientId comes first
+                if (a == NetworkManager.ServerClientId && b != NetworkManager.ServerClientId) return -1;
+                if (b == NetworkManager.ServerClientId && a != NetworkManager.ServerClientId) return 1;
+                return a.CompareTo(b);
+            });
+
+            if (connectedIds.Count >= 2)
+            {
+                // Player 1 (server/host) gets deck1
+                TempPlayerDecks[connectedIds[0]] = deck1;
+                Debug.Log($"[NetworkUI] Stored deck1 for client {connectedIds[0]} (host)");
+
+                // Player 2 (connected client) gets deck2
+                TempPlayerDecks[connectedIds[1]] = deck2;
+                Debug.Log($"[NetworkUI] Stored deck2 for client {connectedIds[1]} (client)");
+            }
+            else
+            {
+                Debug.LogWarning($"[NetworkUI] Not enough connected clients ({connectedIds.Count}). Waiting for both players to connect.");
+                yield break;
+            }
+
+            _decksLoadedFromBackend = true;
+            Debug.Log("[NetworkUI] Successfully loaded both decks from backend");
+
+            // Signal backend that server is ready
+            yield return StartCoroutine(SignalServerReady());
+
+            // Trigger start condition check
+            EvaluateStartCondition("BackendDecksLoaded");
+        }
+        else
+        {
+            Debug.LogError("[NetworkUI] Failed to fetch one or both decks from backend");
+        }
+    }
+
+    private IEnumerator SignalServerReady()
+    {
+        Debug.Log("[NetworkUI] Signaling server ready to backend");
+
+        string backendUrl = "http://localhost:8000";
+        string url = $"{backendUrl}/api/matchmaking/server-ready/";
+
+        // Get match ID from first queue entry (all matched players have same match_id)
+        // For now, we'll create a simple request body
+        string jsonBody = JsonUtility.ToJson(new { status = "ready" });
+        byte[] bodyRaw = System.Text.Encoding.UTF8.GetBytes(jsonBody);
+
+        using (UnityWebRequest request = new UnityWebRequest(url, UnityWebRequest.kHttpVerbPOST))
+        {
+            request.uploadHandler = new UploadHandlerRaw(bodyRaw);
+            request.downloadHandler = new DownloadHandlerBuffer();
+            request.SetRequestHeader("Content-Type", "application/json");
+
+            yield return request.SendWebRequest();
+
+            if (request.result == UnityWebRequest.Result.Success)
+            {
+                Debug.Log("[NetworkUI] Server ready signal sent successfully");
+            }
+            else
+            {
+                Debug.LogError($"[NetworkUI] Failed to signal server ready: {request.error}");
+            }
+        }
+    }
+
+    private IEnumerator FetchDeckFromBackend(string playerId, System.Action<DeckPayload> onSuccess)
+    {
+        string url = $"{backendUrl}/api/players/{playerId}/active-deck/";
+        Debug.Log($"[NetworkUI] Fetching deck from: {url}");
+
+        using (UnityWebRequest request = UnityWebRequest.Get(url))
+        {
+            request.downloadHandler = new DownloadHandlerBuffer();
+            request.SetRequestHeader("Content-Type", "application/json");
+
+            yield return request.SendWebRequest();
+
+            if (request.result == UnityWebRequest.Result.Success)
+            {
+                try
+                {
+                    string json = request.downloadHandler.text;
+                    Debug.Log($"[NetworkUI] Deck response: {json.Substring(0, Mathf.Min(200, json.Length))}...");
+                    var deck = JsonUtility.FromJson<DeckPayload>(json);
+                    onSuccess?.Invoke(deck);
+                    Debug.Log($"[NetworkUI] Successfully fetched deck for player {playerId}");
+                }
+                catch (System.Exception e)
+                {
+                    Debug.LogError($"[NetworkUI] Failed to parse deck JSON for {playerId}: {e.Message}");
+                    onSuccess?.Invoke(null);
+                }
+            }
+            else
+            {
+                Debug.LogError($"[NetworkUI] HTTP error fetching deck for {playerId}: {request.error} (Status: {request.responseCode})");
+                if (!string.IsNullOrEmpty(request.downloadHandler?.text))
+                {
+                    Debug.LogError($"[NetworkUI] Response body: {request.downloadHandler.text}");
+                }
+                onSuccess?.Invoke(null);
+            }
         }
     }
 }

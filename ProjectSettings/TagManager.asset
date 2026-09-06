@@ -19,6 +19,8 @@ TagManager:
   - client1LSSpawn
   - client2LSSPawn
   - Obstacle
+  - manaCell
+  - Paddle
   layers:
   - Default
   - TransparentFX

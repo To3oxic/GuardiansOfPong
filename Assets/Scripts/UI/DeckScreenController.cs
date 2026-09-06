@@ -235,7 +235,7 @@ public class DeckScreenController : MonoBehaviour
     void PopulateAllBrowseLists()
     {
         PopulateBrowseList<CardData>(allCardsContainer, DeckRegistry.Instance?.allCards.ToList(), cardListItemPrefab, HandleCardSelectionFromBrowseList);
-        PopulateBrowseList<CastingLegendData>(allGuardiansContainer, DeckRegistry.Instance?.allCastingLegends.ToList(), guardianListItemPrefab, HandleGuardianSelectionFromBrowseList);
+        PopulateBrowseList<CastingLegendData>(allGuardiansContainer, DeckRegistry.Instance?.allGuardians.ToList(), guardianListItemPrefab, HandleGuardianSelectionFromBrowseList);
         PopulateBrowseList<LegendStoneData>(allStonesContainer, DeckRegistry.Instance?.allLegendStones.ToList(), stoneListItemPrefab, HandleStoneSelectionFromBrowseList);
         UpdateBrowseListItemVisuals();
     }
@@ -258,9 +258,9 @@ public class DeckScreenController : MonoBehaviour
             string displayName = "Unknown";
             Sprite displayIcon = null;
 
-            if (item is CardData card) { displayName = card.cardName; displayIcon = card.cardImage; }
-            else if (item is CastingLegendData legend) { displayName = legend.legendName; displayIcon = legend.legendIcon; }
-            else if (item is LegendStoneData stone) { displayName = stone.stoneName; displayIcon = stone.stoneIcon; }
+            if (item is CardData card) { displayName = card.id; displayIcon = card.cardImage; }
+            else if (item is CastingLegendData legend) { displayName = legend.id; displayIcon = legend.legendIcon; }
+            else if (item is LegendStoneData stone) { displayName = stone.id; displayIcon = stone.stoneIcon; }
             else
             {
                 Debug.LogWarning($"[DeckScreen] PopulateBrowseList encountered an unknown item type: {item.GetType().Name}");
@@ -362,7 +362,7 @@ public class DeckScreenController : MonoBehaviour
 
             T itemDataInRegistry = default(T);
             if (typeof(T) == typeof(CardData)) itemDataInRegistry = DeckRegistry.Instance.allCards.FirstOrDefault(c => c.cardName == itemNameTextCmp.text) as T;
-            else if (typeof(T) == typeof(CastingLegendData)) itemDataInRegistry = DeckRegistry.Instance.allCastingLegends.FirstOrDefault(l => l.legendName == itemNameTextCmp.text) as T;
+            else if (typeof(T) == typeof(CastingLegendData)) itemDataInRegistry = DeckRegistry.Instance.allGuardians.FirstOrDefault(l => l.legendName == itemNameTextCmp.text) as T;
             else if (typeof(T) == typeof(LegendStoneData)) itemDataInRegistry = DeckRegistry.Instance.allLegendStones.FirstOrDefault(s => s.stoneName == itemNameTextCmp.text) as T;
             if (itemDataInRegistry == null) continue;
 

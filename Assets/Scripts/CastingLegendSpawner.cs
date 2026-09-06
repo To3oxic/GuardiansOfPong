@@ -1,13 +1,10 @@
 using UnityEngine;
 using Unity.Netcode;
-
 public class CastingLegendSpawner : NetworkBehaviour
 {
     public CastingLegendData selectedLegend;
     public Transform bottomRightAnchor; // Assign this anchor in the scene (positioned bottom-right)
-
     private GameObject spawnedLegend;
-
     public override void OnNetworkSpawn()
     {
         if (IsOwner && selectedLegend != null && bottomRightAnchor != null)
@@ -15,7 +12,6 @@ public class CastingLegendSpawner : NetworkBehaviour
             SpawnLegendAvatarServerRpc();
         }
     }
-
     [ServerRpc]
     private void SpawnLegendAvatarServerRpc(ServerRpcParams rpcParams = default)
     {
@@ -27,7 +23,6 @@ public class CastingLegendSpawner : NetworkBehaviour
         }
         spawnedLegend = legend;
     }
-
     public GameObject GetSpawnedLegend()
     {
         return spawnedLegend;

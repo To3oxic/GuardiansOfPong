@@ -9,10 +9,29 @@ public class LegendStoneData : ScriptableObject
     [Header("Identification & UI")]
     public string stoneName; // Unique identifier
     public Sprite stoneIcon;
+    public string id;
+
+    public CardRarity rarity;
 
     [Header("Prefabs")]
     public GameObject legendStoneVisualPrefab; // The visual prefab for the stone itself (with LegendStoneController)
-    public GameObject associatedPaddlePrefab; // The Paddle prefab to use when this stone is selected
+
+    // Paddle prefab is now retrieved from the LegendStone prefab itself
+    public GameObject AssociatedPaddlePrefab
+    {
+        get
+        {
+            if (legendStoneVisualPrefab != null)
+            {
+                LegendStoneController stoneController = legendStoneVisualPrefab.GetComponent<LegendStoneController>();
+                if (stoneController != null)
+                {
+                    return stoneController.associatedPaddlePrefab;
+                }
+            }
+            return null;
+        }
+    }
 
     [Header("Gameplay Stats")]
     public float paddleSpeedBonus;

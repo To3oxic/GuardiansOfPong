@@ -1,0 +1,12 @@
+{
+    "asset": "dbca0235c65638747bab854aa5a6772b",
+    "fileName": "019e8858-86c6-7398-935b-549da2e6f730_Preview.jpg",
+    "prompt": "Top-down view of a forest ground with green grass and a worn dirt road running through the middle, seamless and tileable, high detail, realistic texture, forest floor with fallen leaves and small mossy patches",
+    "negativePrompt": "",
+    "model": "realistic-textures-3-0",
+    "modelName": "Realistic Textures 3.0",
+    "customSeed": 141978525,
+    "w3CTraceId": "",
+    "feedback": 0,
+    "refinementMode": "Generation"
+}

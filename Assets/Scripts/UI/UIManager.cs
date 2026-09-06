@@ -1,78 +1,39 @@
-using UnityEngine;
 using System.Collections.Generic;
+using System.Linq;
+using UnityEngine;
 
 public class UIManager : MonoBehaviour
 {
     public static UIManager Instance { get; private set; }
 
     [System.Serializable]
-    public class UIScreen
+    public class ScreenRef
     {
-        public string screenName;
-        public GameObject screenObject;
+        public string name;
+        public GameObject root;
     }
 
-    public List<UIScreen> uiScreens = new List<UIScreen>();
-    private Dictionary<string, GameObject> screenRegistry = new Dictionary<string, GameObject>();
+    public List<ScreenRef> screens = new List<ScreenRef>();
+    public string startScreen = "MainMenuScreen";
+
+    Dictionary<string, GameObject> map;
 
     void Awake()
     {
-        if (Instance == null)
-        {
-            Instance = this;
-            DontDestroyOnLoad(gameObject); // Make UIManager persistent across scenes if needed
-        }
-        else
-        {
-            Destroy(gameObject);
-            return;
-        }
+        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
 
-        foreach (var screen in uiScreens)
-        {
-            if (!string.IsNullOrEmpty(screen.screenName) && screen.screenObject != null)
-            {
-                screenRegistry[screen.screenName] = screen.screenObject;
-            }
-        }
+        map = screens.Where(s => s != null && s.root != null)
+                     .GroupBy(s => s.name)
+                     .ToDictionary(g => g.Key, g => g.First().root);
+
+        ShowScreen(startScreen);
     }
 
-    public void ShowScreen(string screenName)
+    public void ShowScreen(string name)
     {
-        HideAllScreens();
-        if (screenRegistry.TryGetValue(screenName, out GameObject screenToShow))
-        {
-            screenToShow.SetActive(true);
-            Debug.Log($"[UIManager] Showing screen: {screenName}");
-        }
-        else
-        {
-            Debug.LogWarning($"[UIManager] Screen '{screenName}' not found in registry.");
-        }
-    }
-
-    public void HideScreen(string screenName)
-    {
-        if (screenRegistry.TryGetValue(screenName, out GameObject screenToHide))
-        {
-            screenToHide.SetActive(false);
-            Debug.Log($"[UIManager] Hiding screen: {screenName}");
-        }
-    }
-
-    public void HideAllScreens()
-    {
-        foreach (var screen in screenRegistry.Values)
-        {
-            screen.SetActive(false);
-        }
-        Debug.Log("[UIManager] Hid all registered screens.");
-    }
-
-    // Helper to get a screen object if needed by other systems
-    public GameObject GetScreen(string screenName)
-    {
-        screenRegistry.TryGetValue(screenName, out GameObject screen);
-        return screen;
+        foreach (var kv in map)
+            kv.Value.SetActive(kv.Key == name);
     }
 }

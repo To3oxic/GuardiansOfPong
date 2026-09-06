@@ -1,0 +1,28 @@
+{
+    "asset": "42c9ce383b3403c46ba088f2cc5333e0",
+    "fileName": "019ebb81-a685-75a3-9faf-71279092f7a1.jpg",
+    "prompt": "Casting Legend Healer character icon, casual cartoon style, fantasy mage with healing staff, vibrant colors, white background",
+    "negativePrompt": "",
+    "model": "flux-2-pro",
+    "modelName": "Flux 2 (Pro)",
+    "customSeed": -1,
+    "w3CTraceId": "",
+    "feedback": 0,
+    "refinementMode": "Generation",
+    "pixelateTargetSize": 0,
+    "pixelateKeepImageSize": false,
+    "pixelatePixelBlockSize": 0,
+    "pixelatePixelGridSize": 0,
+    "pixelateMode": 0,
+    "pixelateOutlineThickness": 0,
+    "doodles": {
+        "m_Items": []
+    },
+    "upscaleFactor": 0,
+    "dimensions": {
+        "width": 1024,
+        "height": 1024
+    },
+    "spriteSheet": false,
+    "duration": 0.0
+}

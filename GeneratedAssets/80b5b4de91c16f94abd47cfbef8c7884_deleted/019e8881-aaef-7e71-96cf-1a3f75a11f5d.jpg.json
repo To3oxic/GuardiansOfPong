@@ -1,0 +1,28 @@
+{
+    "asset": "80b5b4de91c16f94abd47cfbef8c7884",
+    "fileName": "019e8881-aaef-7e71-96cf-1a3f75a11f5d.jpg",
+    "prompt": "small, cute, chibi like, grass squares to form grid, bush, game board",
+    "negativePrompt": "clash royal like",
+    "model": "rpg-environment",
+    "modelName": "RPG Environment",
+    "customSeed": -1,
+    "w3CTraceId": "",
+    "feedback": 0,
+    "refinementMode": "Generation",
+    "pixelateTargetSize": 0,
+    "pixelateKeepImageSize": false,
+    "pixelatePixelBlockSize": 0,
+    "pixelatePixelGridSize": 0,
+    "pixelateMode": 0,
+    "pixelateOutlineThickness": 0,
+    "doodles": {
+        "m_Items": []
+    },
+    "upscaleFactor": 0,
+    "dimensions": {
+        "width": 1344,
+        "height": 3136
+    },
+    "spriteSheet": false,
+    "duration": 0.0
+}

@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a0457fc415f0ba5468bec8ab5e25871b, type: 3}
+  m_Name: ForestSpirit
+  m_EditorClassIdentifier: 
+  stoneName: ForestSpirit
+  stoneIcon: {fileID: 21300000, guid: 5355fd0d784f84d48a904bf1a94d76d0, type: 3}
+  id: l1
+  rarity: 0
+  legendStoneVisualPrefab: {fileID: 5758737759295367993, guid: c816aab1d84e85f499d762d457f53ca9, type: 3}
+  paddleSpeedBonus: 0
+  damageResistance: 0

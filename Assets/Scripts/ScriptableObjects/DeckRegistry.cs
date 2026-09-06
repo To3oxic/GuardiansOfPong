@@ -6,7 +6,7 @@ using System.Linq;
 public class DeckRegistry : ScriptableObject
 {
     public List<CardData> allCards;
-    public List<CastingLegendData> allCastingLegends;
+    public List<CastingLegendData> allGuardians;
     public List<LegendStoneData> allLegendStones;
 
     public static DeckRegistry Instance;
@@ -24,13 +24,29 @@ public class DeckRegistry : ScriptableObject
         return allCards.FirstOrDefault(c => c.cardName == name);
     }
 
+    public CardData GetCardById(string id)
+    {
+        return allCards.FirstOrDefault(c => c.id == id);
+    }
+
     public CastingLegendData GetCastingLegendByName(string name)
     {
-        return allCastingLegends.FirstOrDefault(l => l.name == name);
+        // Compare against the data field 'legendName' (not the Unity Object name)
+        return allGuardians.FirstOrDefault(l => l.legendName == name);
+    }
+
+    public CastingLegendData GetCastingLegendById(string id)
+    {
+        return allGuardians.FirstOrDefault(l => l.id == id);
     }
 
     public LegendStoneData GetLegendStoneByName(string name)
     {
         return allLegendStones.FirstOrDefault(s => s.stoneName == name);
+    }
+
+    public LegendStoneData GetLegendStoneById(string id)
+    {
+        return allLegendStones.FirstOrDefault(s => s.id == id);
     }
 }

@@ -60,13 +60,38 @@ public class DeckManager : MonoBehaviour
     }
     public DeckPayload GetDeckPayload()
     {
-        return new DeckPayload
+        var deck = new DeckPayload
         {
-            cardNames = CurrentDeck.selectedCards.Select(c => c.cardName).ToList(),
-            castingLegendName = CurrentDeck.selectedCastingLegend.name,
-            legendStoneName = CurrentDeck.selectedLegendStone.name
+            floorId = CurrentDeck.selectedCastingLegend?.floorId ?? string.Empty,
+            // Create simple DTO objects for network serialization
+guardian_card = new DeckPayload.GuardianCardDto
+            {
+                registry_name = CurrentDeck.selectedCastingLegend?.name ?? string.Empty,
+                id = CurrentDeck.selectedCastingLegend?.id ?? string.Empty
+            },
+            legend_stone = new DeckPayload.LegendStoneDto
+            {
+                registry_name = CurrentDeck.selectedLegendStone?.stoneName ?? string.Empty,
+                id = CurrentDeck.selectedLegendStone?.id ?? string.Empty
+            }
         };
 
+        // Add card IDs
+        if (CurrentDeck.selectedCards != null)
+        {
+            deck.cards = new List<DeckPayload.CardDataDto>();
+            foreach (var card in CurrentDeck.selectedCards)
+            {
+                deck.cards.Add(new DeckPayload.CardDataDto
+                {
+                    registry_name = card.cardName,
+                    id = card.id ?? card.id,
+                    level = 5  // Default level 5 for local testing
+                });
+            }
+        }
+
+        return deck;
     }
 
     public PlayerDeckData GetSelectedDeck()

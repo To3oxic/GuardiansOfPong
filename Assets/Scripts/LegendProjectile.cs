@@ -1,40 +1,15 @@
 using UnityEngine;
 using Unity.Netcode;
 
-public class LegendProjectile : NetworkBehaviour
+/// <summary>
+/// Legacy Legend Projectile - now uses universal ProjectileController
+/// This class is kept for backwards compatibility
+/// </summary>
+public class LegendProjectile : ProjectileController
 {
-    public float speed = 15f;
-    private Transform target;
-    private int damage;
-
-    public void Initialize(Transform target, int damage)
+    public void Initialize(Transform target, int damageAmount)
     {
-        this.target = target;
-        this.damage = damage;
+        // Use the universal ProjectileController's target initialization
+        InitializeWithTarget(target, damageAmount, ulong.MaxValue);
     }
-
-    void Update()
-    {
-        if (!IsServer) return;
-        if (target == null)
-        {
-            Destroy(gameObject);
-        }
-
-        Vector3 dir = (target.position - transform.position).normalized;
-        transform.position += dir * speed * Time.deltaTime;
-
-        if (Vector3.Distance(transform.position, target.position) < 0.5f)
-        {
-            var unit = target.GetComponent<UnitController>();
-            if (unit != null)
-            {
-                unit.TakeDamage(damage);
-            }
-
-
-            Destroy(gameObject);
-        }
-    }
-
 }

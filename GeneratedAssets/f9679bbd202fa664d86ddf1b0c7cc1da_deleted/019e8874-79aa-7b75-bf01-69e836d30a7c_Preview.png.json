@@ -1,0 +1,12 @@
+{
+    "asset": "f9679bbd202fa664d86ddf1b0c7cc1da",
+    "fileName": "019e8874-79aa-7b75-bf01-69e836d30a7c_Preview.png",
+    "prompt": "grass, board for mobile game, grid like clash royal, toon like, chibi like, not repeated",
+    "negativePrompt": "",
+    "model": "gemini-3.1-flash-texture",
+    "modelName": "Gemini 3.1 Nano Banana 2",
+    "customSeed": 755752846,
+    "w3CTraceId": "",
+    "feedback": 0,
+    "refinementMode": "Generation"
+}

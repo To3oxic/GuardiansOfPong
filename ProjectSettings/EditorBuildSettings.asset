@@ -6,16 +6,28 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 0
-    path: Assets/Puzzle stage & settings GUI Pack/Demo Scenes/SampleScene.unity
+    path: Assets/MainAssets/GUi/Puzzle stage & settings GUI Pack/Demo Scenes/SampleScene.unity
     guid: 99c9720ab356a0642a771bea13969a05
-  - enabled: 1
-    path: Assets/Scenes/test build.unity
-    guid: 59346aba4b45dc54d8355bbf69bba637
+  - enabled: 0
+    path: Assets/Scenes/MainMenu.unity
+    guid: 184474adb2501b749a29ba5d94c868e2
   - enabled: 1
     path: Assets/Scenes/MainMenuScene.unity
-    guid: 1c3a3ac4985a28548b7b9d814d4459f5
+    guid: 601bc6899132fcb4ea7c907a37460947
+  - enabled: 0
+    path: Assets/Scenes/HeadlessServer.unity
+    guid: 662e8f5a190b1824da0dea318a222046
+  - enabled: 1
+    path: Assets/Scenes/GameScene.unity
+    guid: 59346aba4b45dc54d8355bbf69bba637
+  - enabled: 0
+    path: Assets/Scenes/TestScene.unity
+    guid: b65165d4837688349a5a84958a6c2a45
   m_configObjects:
+    com.unity.adaptivePerformance.basic.provider_settings: {fileID: 11400000, guid: 4b5b93ea240fcb048b588b0dc48955ff, type: 2}
+    com.unity.adaptiveperformance.google.android.provider_settings: {fileID: 11400000, guid: d4692aebc62c62f4f9553a270aca395b, type: 2}
     com.unity.adaptiveperformance.loader_settings: {fileID: 11400000, guid: eb92f865bf279ba4eabacd07bd2b1028, type: 2}
+    com.unity.adaptiveperformance.samsung.android.provider_settings: {fileID: 11400000, guid: 2cd449d52c7f46248b2b62a49768077d, type: 2}
     com.unity.adaptiveperformance.simulator.provider_settings: {fileID: 11400000, guid: f854c3e2b6f439841ac7513bf066a052, type: 2}
+    com.unity.dt.app-ui: {fileID: 11400000, guid: 1b1c20d82303e4b5781c3ef50ac1449f, type: 2}
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
-  m_UseUCBPForAssetBundles: 0

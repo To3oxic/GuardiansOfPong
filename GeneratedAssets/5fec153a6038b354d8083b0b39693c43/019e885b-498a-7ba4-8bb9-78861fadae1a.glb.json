@@ -1,0 +1,23 @@
+{
+    "asset": "5fec153a6038b354d8083b0b39693c43",
+    "fileName": "019e885b-498a-7ba4-8bb9-78861fadae1a.glb",
+    "prompt": "A circular ancient stone platform with moss and grass details, based on the reference image, low-poly stylized fantasy game asset",
+    "negativePrompt": "",
+    "model": "model3d-tripo-p1",
+    "modelName": "Tripo P1",
+    "customSeed": -1,
+    "w3CTraceId": "",
+    "feedback": 0,
+    "refinementMode": "Generation",
+    "promptImageReferenceGuid": "90c02604eaff5da48ad9ef384e04c162",
+    "modelReferenceGuid": "",
+    "multiviewFrontGuid": "",
+    "multiviewBackGuid": "",
+    "multiviewLeftGuid": "",
+    "multiviewRightGuid": "",
+    "multiviewTopGuid": "",
+    "multiviewBottomGuid": "",
+    "multiviewLeftFrontGuid": "",
+    "multiviewRightFrontGuid": "",
+    "faceLimit": -1
+}

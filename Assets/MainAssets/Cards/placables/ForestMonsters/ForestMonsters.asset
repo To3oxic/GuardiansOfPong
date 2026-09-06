@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 47307fd82d0bca24e8390870c02a13e9, type: 3}
+  m_Name: ForestMonsters
+  m_EditorClassIdentifier: 
+  rarity: 0
+  cardType: 0
+  id: c6
+  cardName: ForestMonsters
+  cardImage: {fileID: 21300000, guid: 532536940a255a847aecfef32d879bb8, type: 3}
+  manaCost: 4
+  effect: {fileID: 11400000, guid: ab9a8ef1d00a5d049a0e9121fc3c0621, type: 2}
+  ballMaterialOverride: {fileID: 0}
+  activationSound: {fileID: 0}
+  damagePerLevel: 0a0000000c0000000e00000010000000120000001400000016000000180000001a0000001c000000
+  hpPerLevel: 32000000370000003c00000041000000460000004b00000050000000550000005a0000005f000000
+  durationPerLevel: 030000000400000005000000060000000700000008000000090000000a0000000b0000000c000000

@@ -1,0 +1,28 @@
+{
+    "asset": "0a3a90912ef31e748a3c27dc4b2360ec",
+    "fileName": "019e888b-2b10-7830-a428-9fa9058dc42d.jpg",
+    "prompt": "grid of grass squares ",
+    "negativePrompt": "gameboard",
+    "model": "rpg-environment",
+    "modelName": "RPG Environment",
+    "customSeed": -1,
+    "w3CTraceId": "",
+    "feedback": 0,
+    "refinementMode": "Generation",
+    "pixelateTargetSize": 0,
+    "pixelateKeepImageSize": false,
+    "pixelatePixelBlockSize": 0,
+    "pixelatePixelGridSize": 0,
+    "pixelateMode": 0,
+    "pixelateOutlineThickness": 0,
+    "doodles": {
+        "m_Items": []
+    },
+    "upscaleFactor": 0,
+    "dimensions": {
+        "width": 2048,
+        "height": 2048
+    },
+    "spriteSheet": false,
+    "duration": 0.0
+}
