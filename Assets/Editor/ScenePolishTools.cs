@@ -189,6 +189,31 @@ public static class ScenePolishTools
             "Tune values live on the asset while the Game view is visible.");
     }
 
+    // -------------------------------------------------------------------- fog
+
+    [MenuItem("Tools/Scene Polish/Toggle Depth Fog", priority = 31)]
+    static void ToggleDepthFog()
+    {
+        // RenderSettings has no Undo-friendly object; this menu item is its own toggle.
+        if (!RenderSettings.fog)
+        {
+            RenderSettings.fog = true;
+            RenderSettings.fogMode = FogMode.ExponentialSquared;
+            RenderSettings.fogDensity = 0.0035f;                 // soft, tune in Lighting > Environment
+            RenderSettings.fogColor = new Color(0.34f, 0.42f, 0.55f); // cool blue-grey
+            Say("Depth fog ON — ExpSquared, density 0.0035, cool blue-grey.\n\n" +
+                "Tune it in Window > Rendering > Lighting > Environment (Fog section). " +
+                "Lower density = subtler. Match the color to your skybox horizon.");
+        }
+        else
+        {
+            RenderSettings.fog = false;
+            Say("Depth fog OFF.");
+        }
+
+        EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
+    }
+
     // ------------------------------------------------------------ lightmap prep
 
     // Ancestor names that mark non-moving scenery safe to bake.
