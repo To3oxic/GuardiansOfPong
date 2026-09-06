@@ -134,5 +134,6 @@ MonoBehaviour:
   fireRate: 0.5
   projectilePrefab: {fileID: 0}
   firePoint: {fileID: 0}
-  projectileDamage: 15
+  projectileDamage: 1500
   attackTriggerName: Attack
+  healParticlesPrefab: {fileID: 0}
