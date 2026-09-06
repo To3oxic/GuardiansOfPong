@@ -4,6 +4,7 @@
 using System.Linq;
 using System.Text;
 using UnityEditor;
+using UnityEditor.Rendering;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -147,32 +148,34 @@ public static class ScenePolishTools
             AssetDatabase.Refresh();
         }
 
-        var profile = ScriptableObject.CreateInstance<VolumeProfile>();
-        AssetDatabase.CreateAsset(profile, GameProfilePath);
+        // VolumeProfileFactory is the official editor API — it creates the profile
+        // asset and each override sub-asset and saves them correctly.
+        var profile = VolumeProfileFactory.CreateVolumeProfileAtPath(GameProfilePath);
 
         // Deliberate, mobile-friendly stack. No motion blur / DoF / chromatic
         // aberration / film grain / lens flare — those are the expensive ones.
-        AddOverride<Tonemapping>(profile, t => t.mode.Override(TonemappingMode.ACES));
-        AddOverride<Bloom>(profile, b =>
-        {
-            b.threshold.Override(0.85f);
-            b.intensity.Override(1.2f);
-            b.scatter.Override(0.72f);
-            b.tint.Override(new Color(0.80f, 0.94f, 1f));
-        });
-        AddOverride<Vignette>(profile, v =>
-        {
-            v.intensity.Override(0.30f);
-            v.smoothness.Override(0.45f);
-        });
-        AddOverride<ColorAdjustments>(profile, c =>
-        {
-            c.contrast.Override(8f);
-            c.saturation.Override(6f);
-            c.colorFilter.Override(new Color(1f, 0.99f, 0.96f));
-        });
-        AddOverride<WhiteBalance>(profile, w => w.temperature.Override(-6f));
+        var tone = VolumeProfileFactory.CreateVolumeComponent<Tonemapping>(profile, false, true);
+        tone.mode.Override(TonemappingMode.ACES);
 
+        var bloom = VolumeProfileFactory.CreateVolumeComponent<Bloom>(profile, false, true);
+        bloom.threshold.Override(0.85f);
+        bloom.intensity.Override(1.2f);
+        bloom.scatter.Override(0.72f);
+        bloom.tint.Override(new Color(0.80f, 0.94f, 1f));
+
+        var vig = VolumeProfileFactory.CreateVolumeComponent<Vignette>(profile, false, true);
+        vig.intensity.Override(0.30f);
+        vig.smoothness.Override(0.45f);
+
+        var col = VolumeProfileFactory.CreateVolumeComponent<ColorAdjustments>(profile, false, true);
+        col.contrast.Override(8f);
+        col.saturation.Override(6f);
+        col.colorFilter.Override(new Color(1f, 0.99f, 0.96f));
+
+        var wb = VolumeProfileFactory.CreateVolumeComponent<WhiteBalance>(profile, false, true);
+        wb.temperature.Override(-6f);
+
+        foreach (var c in profile.components) EditorUtility.SetDirty(c);
         EditorUtility.SetDirty(profile);
         AssetDatabase.SaveAssets();
         AssetDatabase.ImportAsset(GameProfilePath, ImportAssetOptions.ForceUpdate);
@@ -184,18 +187,6 @@ public static class ScenePolishTools
             "Assign it: select 'Global Magical Volume' in the Hierarchy -> Volume component -> " +
             "drag this asset into the Profile field (replacing DefaultVolumeProfile). " +
             "Tune values live on the asset while the Game view is visible.");
-    }
-
-    // Adds a volume override AND persists it as a sub-asset of the profile
-    // (VolumeProfile.Add alone leaves the component un-saved, so it vanishes on reload).
-    static void AddOverride<T>(VolumeProfile profile, System.Action<T> setup) where T : VolumeComponent
-    {
-        var comp = profile.Add<T>(false);
-        comp.name = typeof(T).Name;
-        comp.hideFlags = HideFlags.HideInHierarchy | HideFlags.HideInInspector;
-        AssetDatabase.AddObjectToAsset(comp, profile);
-        setup(comp);
-        EditorUtility.SetDirty(comp);
     }
 
     // ------------------------------------------------------------ lightmap prep
