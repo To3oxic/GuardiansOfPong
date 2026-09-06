@@ -99,6 +99,7 @@ public class HealerGuardianController : GuardiansController
                 {
                     animator.SetTrigger(attackTriggerName);
                     PlayAttackAnimationClientRpc();
+                    ScheduleRecenter();
                 }
 
                 // Trigger instant healing

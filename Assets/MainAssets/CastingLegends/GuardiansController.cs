@@ -19,8 +19,20 @@ public class GuardiansController : NetworkBehaviour
     [Header("Animation")]
     public string attackTriggerName = "Attack"; // Name of the trigger parameter in your Animator
 
+    [Header("Attack Recenter")]
+    [Tooltip("Seconds after an attack is triggered before the guardian eases back to its spawn position/rotation. Covers drift from root-motion attack animations.")]
+    public float recenterDelay = 1f;
+    [Tooltip("Higher = snappier return to the spawn transform. 0 = instant snap.")]
+    public float recenterSpeed = 8f;
+
     protected Transform currentTarget;
     protected Animator animator;
+
+    // Spawn pose the guardian is pinned to between attacks
+    protected Vector3 homePosition;
+    protected Quaternion homeRotation;
+    protected bool homeCaptured = false;
+    private float recenterAtTime = -1f;
 
     public override void OnNetworkSpawn()
     {
@@ -32,8 +44,51 @@ public class GuardiansController : NetworkBehaviour
         {
             firePoint = transform;
         }
-        if (animator == null)
+
+        CaptureHome();
+    }
+
+    /// <summary>
+    /// Records the current transform as the pose to return to after each attack.
+    /// Runs on server and every client so animation drift is corrected locally.
+    /// </summary>
+    protected void CaptureHome()
+    {
+        homePosition = transform.position;
+        homeRotation = transform.rotation;
+        homeCaptured = true;
+    }
+
+    /// <summary>
+    /// Call right after triggering the attack animation. Schedules a return to the
+    /// spawn pose once the animation has had time to play.
+    /// </summary>
+    protected void ScheduleRecenter()
+    {
+        recenterAtTime = Time.time + Mathf.Max(0f, recenterDelay);
+    }
+
+    protected virtual void LateUpdate()
+    {
+        if (!homeCaptured || recenterAtTime < 0f || Time.time < recenterAtTime) return;
+
+        if (recenterSpeed <= 0f)
         {
+            transform.SetPositionAndRotation(homePosition, homeRotation);
+            recenterAtTime = -1f;
+            return;
+        }
+
+        float t = 1f - Mathf.Exp(-recenterSpeed * Time.deltaTime);
+        transform.SetPositionAndRotation(
+            Vector3.Lerp(transform.position, homePosition, t),
+            Quaternion.Slerp(transform.rotation, homeRotation, t));
+
+        if ((transform.position - homePosition).sqrMagnitude < 0.0001f &&
+            Quaternion.Angle(transform.rotation, homeRotation) < 0.1f)
+        {
+            transform.SetPositionAndRotation(homePosition, homeRotation);
+            recenterAtTime = -1f;
         }
     }
 
@@ -91,6 +146,7 @@ public class GuardiansController : NetworkBehaviour
             {
                 animator.SetTrigger(attackTriggerName); // Server plays its animation
                 PlayAttackAnimationClientRpc();     // Tell clients to play animation
+                ScheduleRecenter();
             }
             else
             {
@@ -110,6 +166,7 @@ public class GuardiansController : NetworkBehaviour
         if (animator != null && !string.IsNullOrEmpty(attackTriggerName))
         {
             animator.SetTrigger(attackTriggerName);
+            ScheduleRecenter();
         }
     }
 

@@ -14,6 +14,7 @@ public class XodGuardianController : GuardiansController
     {
         // Don't call base.OnNetworkSpawn() as we override the entire behavior
         animator = GetComponent<Animator>();
+        CaptureHome(); // pin spawn pose in case a summon animation is wired later
 
         if (!IsServer)
         {
